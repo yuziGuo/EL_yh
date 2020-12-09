@@ -49,6 +49,7 @@ def _eval_one_table(tb_id):
     false_neg = len(gold_df) - true_pos
     return true_pos, false_neg, false_pos
 
+
 def evaluate():
     logger = getYHLogger(prefix='eval_oracle')
 
