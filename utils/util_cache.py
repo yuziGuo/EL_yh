@@ -30,7 +30,7 @@ def create_lite_tb_for_cache(tb_id, logger):
     # need to be closed!
 
 def cache_one_table(tb_id, logger):
-    logger.info('Caching table {}'.format(tb_id))
+    logger.info('Caching table {} to {}'.format(tb_id, db_name))
     con = create_lite_tb_for_cache(tb_id, logger)
     col_names = 'row_id, col_id, cell_value, lookup_order, label, ' \
                  + 'entity_uri, clses, RefCount'
