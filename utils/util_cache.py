@@ -50,3 +50,20 @@ def cache_one_table(tb_id):
                 print('Error! {}'.format(e.args[0]))
                 con.rollback()
     con.close()
+
+
+def test_cache_one_table(tb_id):
+    tb_cache_name = 'tb_'+tb_id
+    test_select_by_cursor(tb_name=tb_cache_name)
+    return
+
+
+def test_vital():
+    import ipdb; ipdb.set_trace()
+    cache_one_table('1438042989790_89_20150728002309-00310-ip-10-236-191-2_664422904_7')
+
+if __name__=='__main__':
+    # evaluate_oracle_for_one_table(test_tb_id)
+    # cache_one_table(test_tb_id)
+    # test_cache_one_table(test_tb_id)
+    test_vital()
