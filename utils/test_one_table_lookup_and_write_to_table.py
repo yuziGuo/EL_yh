@@ -4,7 +4,7 @@ import json
 import sqlite3 as lite
 from test_util_kb import look_up_mention, get_cand_info_by_mention
 from test_sqlite_basic_ops import test_select_by_cursor
-from util_tb import is_digit_col, get_table_content, is_measure_col
+from util_tb import get_table_content, is_measure_col
 from util_cache import create_lite_tb_for_cache
 from constants import base_dir
 test_tb_id = '3389822_6_374624044314151266'
@@ -27,9 +27,9 @@ def cache_one_table(tb_id):
                  + 'entity_uri, clses, RefCount'
     table_cols = get_table_content(tb_id)
     for col_id, col in enumerate(table_cols):  # to +1
-        if is_digit_col(col):
-            print('Digit! {}'.format(col[:5]))
-            continue
+        # if is_digit_col(col):
+        #     print('Digit! {}'.format(col[:5]))
+        #     continue
         if is_measure_col(col):
             print('Quantity measurement! {}'.format(col[:5]))
             continue
