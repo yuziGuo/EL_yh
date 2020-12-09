@@ -1,7 +1,7 @@
 import sys
 sys.path.append('/home/gyh/pack_for_debug_2/EL_yh/utils')
 from constants import base_dir
-from test_one_table_lookup_and_write_to_table import cache_one_table
+from util_cache import cache_one_table
 import os
 from tqdm import tqdm
 
