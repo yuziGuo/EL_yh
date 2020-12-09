@@ -1,7 +1,17 @@
 import sqlite3 as lite
-db_name = 'test.db'
+import os
+import chardet
+import json
+import sqlite3 as lite
+from test_util_kb import look_up_mention, get_cand_info_by_mention
+from test_sqlite_basic_ops import test_select_by_cursor
+from util_tb import get_table_content, is_measure_col
+from constants import base_dir, cache_dir, lite_db_name
 
-def create_lite_tb_for_cache(tb_id):
+test_tb_id = '3389822_6_374624044314151266'
+db_name = os.path.join(cache_dir, lite_db_name)
+
+def create_lite_tb_for_cache(tb_id, logger):
     try:
         # import ipdb; ipdb.set_trace()
         con = lite.connect(db_name)
@@ -11,27 +21,27 @@ def create_lite_tb_for_cache(tb_id):
             + 'entity_uri STRING, clses STRING, RefCount INT, abstract STRING, comment STRING'
         cur.execute('CREATE TABLE "tb_{}" ({})'.format(tb_id, schema_str))
     except lite.Error as e:
-        import ipdb; ipdb.set_trace()
-        print('Error! {}'.format(e.args[0]))
+        # import ipdb; ipdb.set_trace()
+        logger.error('Error! {} Fail to create lite tb'.format(e.args[0]))
     # finally:
     #     if con:
     #         con.close()
     return con
     # need to be closed!
 
-def cache_one_table(tb_id):
-    print(tb_id)
-    con = create_lite_tb_for_cache(tb_id)
+def cache_one_table(tb_id, logger):
+    logger.info('Caching table {}'.format(tb_id))
+    con = create_lite_tb_for_cache(tb_id, logger)
     col_names = 'row_id, col_id, cell_value, lookup_order, label, ' \
                  + 'entity_uri, clses, RefCount'
     table_cols = get_table_content(tb_id)
     for col_id, col in enumerate(table_cols):  # to +1
+        logger.info('Caching column. col_id:{}, row_num:{}'.format(col_id, len(col)))
         # if is_digit_col(col):
         #     print('Digit! {}'.format(col[:5]))
         #     continue
         if is_measure_col(col):
-            print(tb_id, col_id)
-            print('Quantity measurement! {}'.format(col[:5]))
+            logger.info('Judge as measure col! {}'.format(col[:5]))
             continue
         for row_id, cell_item in enumerate(col[1:]):  # to +1
             # print(col_id, row_id, cell_item)
@@ -47,7 +57,7 @@ def cache_one_table(tb_id):
                 con.rollback()  # 会撤销当前这个 cell mention 的 cand set
                 sys.exit()
             except lite.Error as e:
-                print('Error! {}'.format(e.args[0]))
+                logger.error('lite.Error {}'.format(e.args[0]))
                 con.rollback()
     con.close()
 
@@ -64,6 +74,8 @@ def test_vital():
 
 if __name__=='__main__':
     # evaluate_oracle_for_one_table(test_tb_id)
-    # cache_one_table(test_tb_id)
+    from util_other import getYHLogger
+    logger = getYHLogger(prefix='test')
+    cache_one_table(test_tb_id, logger)
     # test_cache_one_table(test_tb_id)
-    test_vital()
+    # test_vital()
