@@ -74,14 +74,5 @@ def evaluate():
     # turl result on other wikiGS, using wikidata lookup: 88, 64, 74
 
 
-
-
-
-
-
-
-
-
-
 if __name__=='__main__':
     evaluate()
