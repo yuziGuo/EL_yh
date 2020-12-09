@@ -22,6 +22,7 @@ test_tb_id = '3389822_6_374624044314151266'
 
 
 def cache_one_table(tb_id):
+    print(tb_id)
     con = create_lite_tb_for_cache(tb_id)
     col_names = 'row_id, col_id, cell_value, lookup_order, label, ' \
                  + 'entity_uri, clses, RefCount'
@@ -31,9 +32,11 @@ def cache_one_table(tb_id):
         #     print('Digit! {}'.format(col[:5]))
         #     continue
         if is_measure_col(col):
+            print(tb_id, col_id)
             print('Quantity measurement! {}'.format(col[:5]))
             continue
         for row_id, cell_item in enumerate(col[1:]):  # to +1
+            # print(col_id, row_id, cell_item)
             cand_set = get_cand_info_by_mention(row_id+1, col_id, cell_item)
             # import ipdb; ipdb.set_trace()
             if cand_set is None:
@@ -66,7 +69,12 @@ def test_cache_one_table(tb_id):
     return
 
 
+def test_vital():
+    import ipdb; ipdb.set_trace()
+    cache_one_table('1438042989790_89_20150728002309-00310-ip-10-236-191-2_664422904_7')
+
 if __name__=='__main__':
     # evaluate_oracle_for_one_table(test_tb_id)
-    cache_one_table(test_tb_id)
+    # cache_one_table(test_tb_id)
     # test_cache_one_table(test_tb_id)
+    test_vital()
