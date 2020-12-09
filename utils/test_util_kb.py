@@ -7,11 +7,10 @@ import xml.etree.ElementTree as ET
 '''
 1. 基本用法
 2. 长问句 http://localhost:9274/lookup-application/api/search?query=fly%20me%20to%20the%20moon&MaxHits=10
-
-
 '''
-
 def get_cand_info_by_mention(row_id, col_id, cell_item='fly me to the moon', top_k=50):
+    if len(cell_item) > 50:
+        return None
     res_by_dict = look_up_mention(cell_item, top_k)
     if res_by_dict == []:
         return None
@@ -24,6 +23,8 @@ def look_up_mention(cell_item='fly me to the moon', top_k=50):
     lookup_url = 'http://localhost:9274/lookup-application/api/search?query=%s&MaxHits=%d' \
                  % (cell_item, top_k)
     lookup_res = requests.get(lookup_url)
+    if lookup_res.status_code>400:  # 400, 500
+        return []
     root = ET.fromstring(lookup_res.content)
     cand_set = []
     for candidate_idx, child in enumerate(root):

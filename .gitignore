@@ -1,0 +1,10 @@
+/data/efth/
+/data/tabEL/
+/data/turl/
+/.git/
+/logs
+*.db
+**/__pycache__/
+
+
+
