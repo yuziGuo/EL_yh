@@ -18,3 +18,35 @@ def create_lite_tb_for_cache(tb_id):
     #         con.close()
     return con
     # need to be closed!
+
+def cache_one_table(tb_id):
+    print(tb_id)
+    con = create_lite_tb_for_cache(tb_id)
+    col_names = 'row_id, col_id, cell_value, lookup_order, label, ' \
+                 + 'entity_uri, clses, RefCount'
+    table_cols = get_table_content(tb_id)
+    for col_id, col in enumerate(table_cols):  # to +1
+        # if is_digit_col(col):
+        #     print('Digit! {}'.format(col[:5]))
+        #     continue
+        if is_measure_col(col):
+            print(tb_id, col_id)
+            print('Quantity measurement! {}'.format(col[:5]))
+            continue
+        for row_id, cell_item in enumerate(col[1:]):  # to +1
+            # print(col_id, row_id, cell_item)
+            cand_set = get_cand_info_by_mention(row_id+1, col_id, cell_item)
+            # import ipdb; ipdb.set_trace()
+            if cand_set is None:
+                continue
+            try:
+                cur = con.cursor()
+                cur.executemany('INSERT INTO "tb_{}" ({}) VALUES(?,?,?,?, ?,?,?,?)'.format(tb_id, col_names), cand_set)
+                con.commit()
+            except KeyboardInterrupt:
+                con.rollback()  # 会撤销当前这个 cell mention 的 cand set
+                sys.exit()
+            except lite.Error as e:
+                print('Error! {}'.format(e.args[0]))
+                con.rollback()
+    con.close()
