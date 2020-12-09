@@ -1,9 +1,18 @@
+# data
 /data/efth/
 /data/tabEL/
 /data/turl/
 /.git/
+
+# log
 /logs
+/data_observation/log_*
+
+# suffix
 *.db
+*.tar.gz
+
+# others
 **/__pycache__/
 
 

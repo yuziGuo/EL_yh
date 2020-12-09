@@ -7,6 +7,7 @@ import os
 from tqdm import tqdm
 import sqlite3 as lite
 
+
 def cache_all():
     d = os.path.join(base_dir, 'instance')
     test_table_list = list(map(lambda x: '.'.join(x.split('.')[:-1]), os.listdir(d)))
@@ -16,6 +17,7 @@ def cache_all():
 
     for _ in tqdm(test_table_list):
         cache_one_table(_, global_cache_logger, support_breakpoint=True)
+
 
 def _clean(tb_id):
     try:
@@ -28,11 +30,13 @@ def _clean(tb_id):
         con.rollback()
     return
 
+
 def _clean_all():
     d = os.path.join(base_dir, 'instance')
     test_table_list = list(map(lambda x: '.'.join(x.split('.')[:-1]), os.listdir(d)))
     for _ in tqdm(test_table_list):
         _clean(_)
+
 
 if __name__=='__main__':
     cache_all()

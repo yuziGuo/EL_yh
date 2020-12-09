@@ -86,13 +86,12 @@ def check_instance_gs_in_table_list(d='instance'):
 
 
 '''
-这一步检查，目的是发现 instance level 的标注里，有哪些来自非horizontal陈列的表格.
+这一步检查，目的是发现 instance level 的标注里，有哪些来自非 horizontal 陈列的表格.
 最终发现有四个：
     # /home/gyh/pack_for_debug_2/EL_yh/data/t2d/instance/41648740_0_6959523681065295632.csv     mixed
     # /home/gyh/pack_for_debug_2/EL_yh/data/t2d/instance/28494901_6_7026744149694237309.csv     vertical
     # /home/gyh/pack_for_debug_2/EL_yh/data/t2d/instance/44206774_0_3810538885942465703.csv     mixed
     # /home/gyh/pack_for_debug_2/EL_yh/data/t2d/instance/79966524_0_1484492112455633784.csv     horizonal（打错字）
-
 '''
 def check_instance_annotation_on_non_horizontal_table(d='instance'):
     non_hori_tb_list = []
@@ -108,7 +107,6 @@ def check_instance_annotation_on_non_horizontal_table(d='instance'):
         print(res)
 
     import ipdb; ipdb.set_trace()
-
 
 
 def decode_one_table(fn='3389822_6_374624044314151266.json', check_orientation=False):
@@ -148,6 +146,7 @@ def decode_one_table(fn='3389822_6_374624044314151266.json', check_orientation=F
     # assert t['tableOrientation'] == 'HORIZONTAL'
     # import ipdb; ipdb.set_trace()
 
+
 def decode_all_tables():
     table_dir = os.path.join(base_dir, 'tables')
     table_list = os.listdir(table_dir)
@@ -155,10 +154,12 @@ def decode_all_tables():
         decode_one_table(tb)
         # print('tb')
 
+
 def check_text_property_for_one_webtable(fn='3389822_6_374624044314151266.json'):
     desc = get_table_desc(fn)
     rec = {k: len(v.strip())!=0 for k,v in desc.items()}
     return rec
+
 
 def check_text_property_for_all_webtables():
     table_dir = os.path.join(base_dir, 'tables')
@@ -204,6 +205,7 @@ def check_raw_language_for_all_table():
     from collections import Counter
     assert Counter([_[0] for _ in langs]) == Counter({'en': 708, 'de': 32, 'fr': 8, 'pl': 5, 'ca': 5, 'es': 2, 'sv': 2, 'nl': 2, 'tr': 2, 'af': 2, 'pt': 2, 'th': 1, 'no': 1, 'ru': 1, 'cy': 1, 'ko': 1, 'zh-cn': 1, 'ro': 1, 'ar': 1, 'id': 1})
     # pass
+
 
 def check_hasKeyColumn_for_all_tables():
     table_dir = os.path.join(base_dir, 'tables')

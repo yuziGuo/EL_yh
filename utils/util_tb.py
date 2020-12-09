@@ -41,13 +41,16 @@ def webtable2dict(tb_id):
         #     table_cols = t['relation']
         return t
 
+
 def get_table_content(tb_id):
     return webtable2dict(tb_id)['relation']
+
 
 def get_table_desc(tb_id, desc_keys=["pageTitle", "title", "textBeforeTable", "textAfterTable"]):
     # return webtable2dict(tb_id)['title']
     webtable = webtable2dict(tb_id)
     return {k: webtable.get(k, None) for k in desc_keys}
+
 
 def is_numeric(num):
     try:
@@ -192,6 +195,7 @@ def test_4():
     for _ in cols:
         print(_)
         print(is_measure_col(_))
+
 
 if __name__=='__main__':
     test_3()
