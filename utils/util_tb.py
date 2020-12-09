@@ -155,7 +155,11 @@ def is_measure_col(col):
     for _ in col_measure_part:
         for _ in re.findall(r'([\d+(,\.\d+)]+|[a-z]+)', _):
             measures.add(_)
-    if len(measures) <= min(len(col)//5, 7): # magic number 7: 1('') + 3 + 3
+    if len(measures) <= min(len(col)//5, 7) and \
+            len(set(''.join(list(measures))))<20:
+        # 1. a few possible words (km h ...)
+        # magic number 7: 1('') + 3 + 3
+        # 2. a few possible chars (to exclude ['China', 'US', ...])
         return True
     return False
 
