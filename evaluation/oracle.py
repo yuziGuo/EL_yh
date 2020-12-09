@@ -45,7 +45,7 @@ def _eval_one_table(tb_id):
     lookup_df = _get_lookup_res_df(tb_id)[['row_id', 'entity_uri']].drop_duplicates()
     gold_df = _get_gold_df(tb_id)
     true_pos = len(pd.merge(gold_df, lookup_df))
-    false_pos = len(lookup_df.drop_duplicates()) - true_pos
+    false_pos = len(lookup_df['row_id'].drop_duplicates()) - true_pos
     false_neg = len(gold_df) - true_pos
     return true_pos, false_neg, false_pos
 
@@ -67,9 +67,11 @@ def evaluate():
     logger.info('Total: TP:{}, FN:{}, FP:{}'.format(total_true_pos, total_false_neg, total_false_pos))
     precision = total_true_pos / (total_true_pos + total_false_pos)
     recall = total_true_pos / (total_true_pos + total_false_neg)
-    f1 = 0.5* (precision + recall) / (precision * recall)
+    f1 = 2 * precision * recall / (precision + recall)
     logger.info('Oracel Evaluation Result: P:{}, R:{}, F1:{}'.format(
         precision, recall, f1))
+    # res: 71, 75, 73 (make sense!)
+    # turl result on other wikiGS, using wikidata lookup: 88, 64, 74
 
 
 
