@@ -1,7 +1,7 @@
 import sys
 sys.path.append('/home/gyh/pack_for_debug_2/EL_yh/utils')
 from constants import base_dir
-from util_cache import cache_one_table
+from util_cache import cache_one_table, _create_lite_tb_for_cache
 from util_other import getYHLogger
 import os
 from tqdm import tqdm
@@ -37,8 +37,14 @@ def _clean_all():
     for _ in tqdm(test_table_list):
         _clean(_)
 
+# fix
+def _fix():
+    con = _create_lite_tb_for_cache('1438042989043_35_20150728002309-00201-ip-10-236-191-2_448144', None)
+    con.close()
+
 
 if __name__=='__main__':
-    cache_all()
+    # cache_all()
     # _clean_all()
+    _fix()
 

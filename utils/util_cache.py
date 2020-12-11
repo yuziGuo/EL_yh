@@ -12,7 +12,8 @@ test_tb_id = '3389822_6_374624044314151266'
 db_name = os.path.join(cache_dir, lite_db_name)
 
 
-def _create_lite_tb_for_cache(tb_id, logger):
+def _create_lite_tb_for_cache(tb_id, logger=None):
+    # import ipdb; ipdb.set_trace()
     try:
         # import ipdb; ipdb.set_trace()
         con = lite.connect(db_name)
@@ -23,7 +24,8 @@ def _create_lite_tb_for_cache(tb_id, logger):
         cur.execute('CREATE TABLE "tb_{}" ({})'.format(tb_id, schema_str))
     except lite.Error as e:
         # import ipdb; ipdb.set_trace()
-        logger.error('Error! {} Fail to create lite tb'.format(e.args[0]))
+        if logger:
+            logger.error('Error! {} Fail to create lite tb'.format(e.args[0]))
     # finally:
     #     if con:
     #         con.close()
