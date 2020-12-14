@@ -39,12 +39,13 @@ def _clean_all():
 
 # fix
 def _fix():
-    con = _create_lite_tb_for_cache('1438042989043_35_20150728002309-00201-ip-10-236-191-2_448144', None)
+    tb_id = '1438042989043_35_20150728002309-00201-ip-10-236-191-2_448144'
+    con = _create_lite_tb_for_cache(tb_id, logger=None, prefix='tb_' )
     con.close()
 
 
 if __name__=='__main__':
-    # cache_all()
+    cache_all()
     # _clean_all()
-    _fix()
+    # _fix()
 

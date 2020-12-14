@@ -1,4 +1,4 @@
 #!/bin/bash
 ipython ./cache_kb/cache.py
-ipython ./evaluation/kb_lookup.py --mode oracle
-ipython ./evaluation/kb_lookup.py --mode top
+python ./evaluation/kb_lookup.py --mode oracle
+python ./evaluation/kb_lookup.py --mode top
