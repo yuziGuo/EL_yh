@@ -186,11 +186,11 @@ def cache_extending_info_for_uri_list(entity_uri_list, flag_list, tb_id, logger=
             if _insert_bunch(res_all, con, cur, tb_id, col_names) == True:
                 for _idx in now_bunch:
                     flag_list[_idx] = 2
-                logger.info('{}: [YH INFO] 100 inserted ! '.threading.currentThread().getName())
+                logger.info('{}: [YH INFO] 100 inserted ! '.format(threading.currentThread().getName()))
             else:
                 for _idx in now_bunch:
                     flag_list[_idx] = 0
-                logger.info('{}: [YH INFO] rollback ! '.threading.currentThread().getName())
+                logger.info('{}: [YH INFO] rollback ! '.format(threading.currentThread().getName()))
     con.close()
 
 

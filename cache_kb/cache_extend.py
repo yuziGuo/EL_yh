@@ -45,11 +45,12 @@ def cache(support_breakpoint=False):
     uri_list = _get_uri_list_overall()
     if support_breakpoint:
         cached_list = _get_uri_list_cached(tb_id)
-        uri_list = list(filter(lambda x: x not in cached_list, uri_list))
+        # uri_list = list(filter(lambda x: x not in cached_list, uri_list))
+        uri_list = list(set(uri_list).difference(set(cached_list)))
     flag_list = [0] * len(uri_list)
     logger.info('{} entity uris to search and cache'.format(len(uri_list)))
 
-    if not support_breakpoint or not _check_tb_exists(tb_id):
+    if not support_breakpoint or not _check_tb_exists('extend_by_desc_'+tb_id):
         _create_lite_tb_for_cache(tb_id, logger, prefix='extend_by_desc')
 
     thread_num = 30
