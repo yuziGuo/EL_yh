@@ -11,6 +11,7 @@
 # suffix
 *.db
 *.tar.gz
+bert_model.bin*
 
 # others
 **/__pycache__/
