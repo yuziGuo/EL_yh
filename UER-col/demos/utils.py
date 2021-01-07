@@ -11,25 +11,24 @@ from uer.utils.vocab import Vocab
 from uer.utils.tokenizer import BertTokenizer
 
 
-def get_logger():
+def get_logger(log_name=None, mode='w'):
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)  # Log等级总开关
     rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
     # log_path = os.path.dirname(os.getcwd()) + '/Logs/'
     # log_name = log_path + rq + '.log'
-    log_name = 'Logs_2/' + rq + '.log'
-    # os.mknod(log_name)
+    if log_name == None:
+        log_name = 'Logs_col_cls/' + rq + '.log'
     logfile = log_name
-    # logfile = 'yh_logging'
-    fh = logging.FileHandler(logfile, mode='w')
-    fh.setLevel(logging.DEBUG)  # 输出到file的log等级的开关
+    fh = logging.FileHandler(logfile, mode=mode)
+    fh.setLevel(logging.INFO)  # 输出到file的log等级的开关
     formatter = logging.Formatter("%(asctime)s - %(filename)s [line:%(lineno)d] - %(levelname)s: %(message)s")
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
     # add a console handler
     ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
+    ch.setLevel(logging.DEBUG) # DEBUG < INFO （more strict）
     ch.setFormatter(formatter)
     logger.addHandler(ch)
     return logger
@@ -73,3 +72,16 @@ def load_or_initialize_parameters(args, model):
         for n, p in list(model.named_parameters()):
             if 'gamma' not in n and 'beta' not in n:
                 p.data.normal_(0, 0.02)
+
+def batch_loader(batch_size, src, tgt, seg):
+    instances_num = src.size()[0]
+    for i in range(instances_num // batch_size):
+        src_batch = src[i * batch_size : (i + 1) * batch_size, :]
+        tgt_batch = tgt[i * batch_size : (i + 1) * batch_size]
+        seg_batch = seg[i * batch_size : (i + 1) * batch_size, :]
+        yield src_batch, tgt_batch, seg_batch
+    if instances_num > instances_num // batch_size * batch_size:
+        src_batch = src[instances_num // batch_size * batch_size :, :]
+        tgt_batch = tgt[instances_num // batch_size * batch_size :]
+        seg_batch = seg[instances_num // batch_size * batch_size :, :]
+        yield src_batch, tgt_batch, seg_batch

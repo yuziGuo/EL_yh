@@ -38,8 +38,9 @@ def generate_seg(args, cols, noise_num=0, row_wise_fill=False):
                 except:
                     IndexError
                     import ipdb; ipdb.set_trace()
-                temp = [SEP_ID]
-                temp += args.tokenizer.convert_tokens_to_ids(args.tokenizer.tokenize(dataframe))[:dataframe_max_len-2]
+                # temp = [SEP_ID]
+                temp = args.tokenizer.convert_tokens_to_ids(args.tokenizer.tokenize(dataframe))[:dataframe_max_len-2]
+                temp += [SEP_ID]
                 tokens.extend(temp)
                 for idx_tok in range(1, len(temp)+1):
                     seg.append(idx_tok*10000 + idx_c*100 +idx_r)
@@ -62,17 +63,21 @@ def generate_mask_crosswise(seg):
     bz, seq_len = seg.shape
     seg = seg % 10000
 
-    cls_see_all_mask = (seg > 0).float()  # [bz, seq_len]
-    cls_see_all_mask = cls_see_all_mask.view(bz, 1, 1, seq_len)
+    # cls_see_all_mask = (seg > 0).float()  # [bz, seq_len]
+    # cls_see_all_mask = cls_see_all_mask.view(bz, 1, 1, seq_len)
 
-    seg = seg.view(bz, 1, seq_len)
-    seg_2 = seg.view(bz, seq_len, 1)
+    seg = seg.view(bz, seq_len, 1)
+    seg_2 = seg.view(bz, 1, seq_len)
 
     row_wise_see = (seg % 100 == seg_2 % 100).unsqueeze(1).float()  # mask: [batch_size x 1 x seq_length x seq_length]
     col_wise_see = (seg // 100 == seg_2 // 100).unsqueeze(1).float()*2
-    mask = row_wise_see + col_wise_see
+    hier_tab_col_see = ((seg % 100 > 90) * (seg_2 % 100 > 90)).unsqueeze(1).float() * 4
+
+    # import ipdb; ipdb.set_trace()
+    mask = row_wise_see + col_wise_see + hier_tab_col_see
+    # mask = torch.cat((cls_see_all_mask, mask[:, :, 1:, :]), dim=-2)
     # then we can use 1,2,3.. (or more possible cnt numbers) to distinguish different relations -> relation-aware attention
-    return torch.cat((cls_see_all_mask, mask[:,:,1:,:]), dim=-2)
+    return mask
 
 
 def get_sep_idxs(seg, option):

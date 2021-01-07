@@ -20,6 +20,7 @@ class TabEncoder(nn.Module):
 
 
     def forward(self, src, mask):
+        # import ipdb; ipdb.set_trace()
         emb = self.embedding(src, mask)  # [8, 64, 768]
         output = self.encoder(emb, mask)  # # [8, 64, 768]
         return output
@@ -47,7 +48,7 @@ class TabEncoder(nn.Module):
                 index = get_sep_idxs(seg, 'cell').T
                 embs_table = scatter_mean(src=output[index[0], index[1], :], index=index[0], dim=-2)
                 
-            assert embs_table.shape == (bz, embs_size)
+            assert embs_table.shape == (bz, emb_size)
             return embs_table
 
         if option == 'columns':
@@ -56,7 +57,7 @@ class TabEncoder(nn.Module):
             if self.pooling == 'seg':
                 index = get_sep_idxs(seg, 'col').T
                 emb_cols = output[index[0], index[1], :]
-                emb_cols.b.view(bz, -1,emb_size)
+                emb_cols = emb_cols.view(bz, -1, emb_size)
 
             if self.pooling == 'avg-cell-seg':
                 index = get_sep_idxs(seg, 'cell').T
@@ -70,8 +71,22 @@ class TabEncoder(nn.Module):
                 index = torch.nonzero( ((seg//10000)==1).float() * ((seg%100)==1).float() ).T  # bz*col_num, 2
                 emb_cols = output[index[0], index[1], :]
 
-            assert embs_cols.shape == (bz, col_num, embs_size)
+            assert emb_cols.shape == (bz, col_num, emb_size)
             return emb_cols
+
+        if option == 'first-column':
+            # import ipdb; ipdb.set_trace()
+            if self.pooling == 'seg':
+                return output[:,1,:]
+            if self.pooling == 'avg-cell-seg':
+                _idxs = torch.nonzero((seg>=10100).float()*(seg<10200).float()).T
+                emb_cols = scatter_mean(src=output[_idxs[0], _idxs[1], :], index=_idxs[0], dim=-2)
+                return emb_cols
+            if self.pooling == 'avg-token':
+                _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float()).T
+                emb_cols = scatter_mean(src=output[_idxs[0], _idxs[1], :], index=_idxs[0], dim=-2) # [bz, emb_size]
+                return emb_cols
+
 
         # if option == 'cells':
         #     if self.pooling == 'sep':

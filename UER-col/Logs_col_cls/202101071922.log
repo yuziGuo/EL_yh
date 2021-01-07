@@ -1,0 +1,21 @@
+2021-01-07 19:22:48,973 - task_col_classifier.py [line:218] - INFO: Model sent to device: cuda:0/cuda
+2021-01-07 19:23:13,400 - task_col_classifier.py [line:206] - INFO: Epoch id: 1, Training steps: 100, Avg loss: 2.889
+2021-01-07 19:23:39,635 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_t2d	Acc: 0.045112781954887216
+2021-01-07 19:23:48,411 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_wikipedia	Acc: 0.03257328990228013
+2021-01-07 19:23:50,098 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_limaye	Acc: 0.0
+2021-01-07 19:24:10,179 - task_col_classifier.py [line:206] - INFO: Epoch id: 2, Training steps: 100, Avg loss: 5.320
+2021-01-07 19:24:36,761 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_t2d	Acc: 0.17293233082706766
+2021-01-07 19:24:45,572 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_wikipedia	Acc: 0.04723127035830619
+2021-01-07 19:24:47,234 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_limaye	Acc: 0.16666666666666666
+2021-01-07 19:25:07,677 - task_col_classifier.py [line:206] - INFO: Epoch id: 3, Training steps: 100, Avg loss: 5.409
+2021-01-07 19:25:34,111 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_t2d	Acc: 0.23308270676691728
+2021-01-07 19:25:42,829 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_wikipedia	Acc: 0.0749185667752443
+2021-01-07 19:25:44,499 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_limaye	Acc: 0.14912280701754385
+2021-01-07 19:26:04,311 - task_col_classifier.py [line:206] - INFO: Epoch id: 4, Training steps: 100, Avg loss: 4.086
+2021-01-07 19:26:30,987 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_t2d	Acc: 0.556390977443609
+2021-01-07 19:26:39,703 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_wikipedia	Acc: 0.13843648208469056
+2021-01-07 19:26:41,379 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_limaye	Acc: 0.07017543859649122
+2021-01-07 19:27:01,259 - task_col_classifier.py [line:206] - INFO: Epoch id: 5, Training steps: 100, Avg loss: 2.799
+2021-01-07 19:27:27,373 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_t2d	Acc: 0.5789473684210527
+2021-01-07 19:27:36,143 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_wikipedia	Acc: 0.18892508143322476
+2021-01-07 19:27:37,811 - task_col_classifier.py [line:187] - INFO: Epoch_id: None	 DataSet: ff_no_dup_test_samples_limaye	Acc: 0.14035087719298245
