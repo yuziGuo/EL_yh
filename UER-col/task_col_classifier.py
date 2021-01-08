@@ -56,11 +56,11 @@ def set_args():
 
     # options task-specific
     args.epochs_num = 8
-    # args.train_path = './data/aida/ff_no_dup_train_samples'
+    args.train_path = './data/aida/ff_no_dup_train_samples'
     args.t2d_path = './data/aida/ff_no_dup_test_samples_t2d'
     args.limaye_path = './data/aida/ff_no_dup_test_samples_limaye'
     args.wiki_path = './data/aida/ff_no_dup_test_samples_wikipedia'
-    args.train_path = './data/aida/ff_train_samples'
+    # args.train_path = './data/aida/ff_train_samples'
     # args.t2d_path = './data/aida/ff_test_samples_t2d'
     # args.limaye_path = './data/aida/ff_test_samples_limaye'
     # args.wiki_path = './data/aida/ff_test_samples_wikipedia'
@@ -87,7 +87,10 @@ def read_dataset(args, data_path):
         label = args.labels_map.get(label_name)
         dataset.append((tokens, label, seg, raw_tab_id))
     return dataset
-
+    # args.train_path = './data/aida/ff_no_dup_train_samples'
+    # args.t2d_path = './data/aida/ff_no_dup_test_samples_t2d'
+    # args.limaye_path = './data/aida/ff_no_dup_test_samples_limaye'
+    # args.wiki_path = './data/aida/ff_no_dup_test_samples_wikipedia'
 
 class col_classifier(nn.Module):
     def __init__(self, args):
@@ -146,6 +149,8 @@ def eval_batch(args, model, src_batch, seg_batch):
 def _loader(args, ds, shuffle=True):
     # ds: list < tokens, label, seg, raw_tab_id>
     # raw_tab_id is not loaded here
+    if shuffle:
+        random.shuffle(ds)  # todo: set seed
     src = torch.LongTensor([example[0] for example in ds])
     tgt = torch.LongTensor([example[1] for example in ds])
     seg = torch.LongTensor([example[2] for example in ds])
@@ -209,13 +214,13 @@ def evaluate(args, model, epoch_id=None):
         ))
 
 
-def train(args, model):
+def train_and_eval(args, model):
     ds = read_dataset(args, args.train_path)
     args.train_steps = int(len(ds) * args.epochs_num / args.batch_size) + 1
     optimizer, scheduler = build_optimizer(args, model)
 
-    total_loss = 0.
     for epoch in range(1, args.epochs_num+1):
+        total_loss = 0.
         model.train()
         for i, (src_batch, tgt_batch, seg_batch) in enumerate(_loader(args, ds, shuffle=True)):
             loss = train_batch(args, model, optimizer, scheduler, src_batch, tgt_batch, seg_batch)
@@ -227,8 +232,8 @@ def train(args, model):
 
         # args.logger.INFO()
         # if epoch % 4 == 0:
-        # model.eval()
-        # evaluate(args, model, epoch_id=epoch)
+        model.eval()
+        evaluate(args, model, epoch_id=epoch)
 
 
 
@@ -240,6 +245,9 @@ if __name__ == '__main__':
         model = col_classifier(args)
         load_or_initialize_parameters(args, model.encoder)
         model = model.to(args.device)
-        args.logger.info('Model sent to device: {}/{}'.format(model.state_dict()['output_layer_2.bias'].device, args.device))
-        train(args, model)
+        if torch.cuda.device_count() > 1:
+            print("{} GPUs are available. Let's use them.".format(torch.cuda.device_count()))
+            model = torch.nn.DataParallel(model)
+        # args.logger.info('Model sent to device: {}/{}'.format(model.state_dict()['output_layer_2.bias'].device, args.device))
+        train_and_eval(args, model)
 
