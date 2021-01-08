@@ -24,7 +24,7 @@ from torch import nn
 from col_spec_yh.store_utils import decode_and_verify_aida_file, get_labels_map_from_aida_file
 
 
-def set_args():
+def set_args(predefined_dict_groups):
     # options for model
     args = Bunch()
     args.mask_mode = 'crosswise'
@@ -55,7 +55,7 @@ def set_args():
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # options task-specific
-    args.epochs_num = 8
+    args.epochs_num = 40
     args.train_path = './data/aida/ff_no_dup_train_samples'
     args.t2d_path = './data/aida/ff_no_dup_test_samples_t2d'
     args.limaye_path = './data/aida/ff_no_dup_test_samples_limaye'
@@ -76,6 +76,11 @@ def set_args():
     args.logger = get_logger(option='detail', dir_name='logs_col')
     args.logger_2 = get_logger(option='results', file_name='rec_all_1')
     args.report_steps = 100
+
+    for predefined_dict_group in predefined_dict_groups.values():
+        for k, v in predefined_dict_group.items():
+            args[k] = v
+
     return args
 
 
@@ -177,32 +182,20 @@ def evaluate(args, model, epoch_id=None):
                 for raw_tab_id in raw_tab_ids
             ]
         )
-        # import ipdb; ipdb.set_trace()
         tab_level_preds = torch.argmax(tab_level_logits, dim=1)
         return tab_level_ground_truth, tab_level_preds
 
-    for ds_path in [
-        # args.train_path
-        args.t2d_path
-        # , args.wiki_path, args.limaye_path
-                    ]:
+    for ds_path in [args.t2d_path,args.wiki_path, args.limaye_path]:
         ds = read_dataset(args, ds_path)
         # ds: list < tokens, label, seg, raw_tab_id >
         with torch.no_grad():
-            try:
-                logits_all = torch.cat(
-                    [
-                        eval_batch(args, model, src_batch, seg_batch)
-                        for src_batch, _, seg_batch in _loader(args, ds, shuffle=False)
-                    ]
-                )
-            except:
-                import ipdb; ipdb.set_trace()
-                for src_batch, _, seg_batch in _loader(args, ds, shuffle=False):
-                    _b = eval_batch(args, model, src_batch, seg_batch)
-                    print(_b.shape)
+            logits_all = torch.cat(
+                [
+                    eval_batch(args, model, src_batch, seg_batch)
+                    for src_batch, _, seg_batch in _loader(args, ds, shuffle=False)
+                ]
+            )
         tab_level_ground_truth, tab_level_preds = reduce_to_tab_level(logits_all, ds)
-        print(tab_level_preds)
         acc_score = accuracy_score(tab_level_ground_truth.data.cpu().numpy(),
                                    tab_level_preds.data.cpu().numpy())
 
@@ -231,15 +224,18 @@ def train_and_eval(args, model):
                 total_loss = 0.
 
         # args.logger.INFO()
-        # if epoch % 4 == 0:
-        model.eval()
-        evaluate(args, model, epoch_id=epoch)
+        if 'no_dup' in args.train_path:
+            if epoch % 3 == 0:
+                model.eval()
+                evaluate(args, model, epoch_id=epoch)
+        else:
+            model.eval()
+            evaluate(args, model, epoch_id=epoch)
 
 
-
-if __name__ == '__main__':
-    for _ in range(10): # repeat 10 times
-        args = set_args()
+def experiment(repeat_time, predefined_dict_groups=None):
+    for _ in range(repeat_time):
+        args = set_args(predefined_dict_groups=predefined_dict_groups)
         args.logger.info('args: {}'.format(args))
         args.logger_2.info('args: {}'.format(args))
         model = col_classifier(args)
@@ -251,3 +247,31 @@ if __name__ == '__main__':
         # args.logger.info('Model sent to device: {}/{}'.format(model.state_dict()['output_layer_2.bias'].device, args.device))
         train_and_eval(args, model)
 
+if __name__ == '__main__':
+    op_1_1 = {'repeat_time': 3}
+    op_2_1 = {'pooling':'avg-cell-seg'}
+    op_2_2 = {'pooling': 'seg'}
+    op_2_3 = {'pooling': 'avg-tokens'}
+    op_3_1 = {
+        "train_path" : './data/aida/ff_no_dup_train_samples',
+        "t2d_path" : './data/aida/ff_no_dup_test_samples_t2d',
+        "limaye_path" : './data/aida/ff_no_dup_test_samples_limaye',
+        "wiki_path" : './data/aida/ff_no_dup_test_samples_wikipedia',
+        "epochs_num" : 40,
+    }
+    op_3_2 = {
+        "train_path" : './data/aida/ff_train_samples',
+        "t2d_path" : './data/aida/ff_test_samples_t2d',
+        "limaye_path" : './data/aida/ff_test_samples_limaye',
+        "wiki_path" : './data/aida/ff_test_samples_wikipedia',
+        "epochs_num" : 8,
+    }
+
+    for ds_options in [op_3_1, op_3_2]:
+        for pooling_options in [op_2_1, op_2_2, op_2_3]:
+            predefined_dict_groups = {
+                                      'pooling_set_group':pooling_options,
+                                      'ds_set_group':ds_options
+                                      }
+            print(predefined_dict_groups)
+            experiment(repeat_time=3, predefined_dict_groups=predefined_dict_groups)
