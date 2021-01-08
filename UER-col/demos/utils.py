@@ -3,7 +3,6 @@ import sys
 from sklearn.utils import Bunch
 
 import logging  # 引入logging模块
-import os.path
 import time
 import torch
 
@@ -11,27 +10,41 @@ from uer.utils.vocab import Vocab
 from uer.utils.tokenizer import BertTokenizer
 
 
-def get_logger(log_name=None, mode='w'):
-    logger = logging.getLogger()
+def get_logger(option="detail", dir_name='logs_default', file_name='log_rec_all'):
+    logger = logging.getLogger(option)
     logger.setLevel(logging.DEBUG)  # Log等级总开关
-    rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
-    # log_path = os.path.dirname(os.getcwd()) + '/Logs/'
-    # log_name = log_path + rq + '.log'
-    if log_name == None:
-        log_name = 'Logs_col_cls/' + rq + '.log'
-    logfile = log_name
-    fh = logging.FileHandler(logfile, mode=mode)
-    fh.setLevel(logging.INFO)  # 输出到file的log等级的开关
-    formatter = logging.Formatter("%(asctime)s - %(filename)s [line:%(lineno)d] - %(levelname)s: %(message)s")
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
 
-    # add a console handler
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG) # DEBUG < INFO （more strict）
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+    if option == "detail":
+        if not os.path.exists(dir_name) or os.path.isfile(dir_name):
+            os.makedirs(dir_name)
+        rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
+        log_name = os.path.join(dir_name, rq) + '.log'
+        # add a file handler
+        logfile = log_name
+        fh = logging.FileHandler(logfile, mode='w')
+        fh.setLevel(logging.INFO)  # 输出到file的log等级的开关
+        formatter = logging.Formatter("%(asctime)s - %(filename)s [line:%(lineno)d] - %(levelname)s: %(message)s")
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+        # add a console handler
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)  # DEBUG < INFO （more strict）
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
+
+    if option == "results":
+        logfile = file_name
+        fh = logging.FileHandler(logfile, mode='a')
+        fh.setLevel(logging.INFO)  # 输出到file的log等级的开关
+        formatter = logging.Formatter("%(asctime)s - %(filename)s [#l:%(lineno)d] - %(message)s")
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+
     return logger
+
+
+
 
 def get_args():
     args = Bunch()

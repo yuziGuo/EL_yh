@@ -8,10 +8,14 @@
 /logs
 /data_observation/log_*
 
+
 # suffix
 *.db
 *.tar.gz
 bert_model.bin*
+Log*
+log*
+rec_all*
 
 # others
 **/__pycache__/

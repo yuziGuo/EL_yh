@@ -48,7 +48,7 @@ def decode_and_verify_aida_file(data_path):
                 ipdb.set_trace()
                 print(_cols)
                 ipdb.set_trace()
-    print('Checked! ' + data_path)
+    print('Checked! DataPath: {}. Lines (#micro tables): {}'.format(data_path, len(label_list)))
     return raw_tab_id_list, label_list, tab_cols_list
 
 
