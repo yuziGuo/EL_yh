@@ -1,0 +1,36 @@
+2021-01-08 15:28:10,724 - task_col_classifier.py [line:238] - INFO: args: {'mask_mode': 'crosswise', 'pooling': 'avg-cell-seg', 'seq_len': 90, 'pretrained_model_path': './models/bert_model.bin-000', 'vocab_path': 'models/google_uncased_en_vocab.txt', 'vocab': <uer.utils.vocab.Vocab object at 0x7f677e999400>, 'emb_size': 768, 'embedding': 'tab', 'encoder': 'bert', 'subword_type': 'none', 'tokenizer': <uer.utils.tokenizer.BertTokenizer object at 0x7f665cb8ad68>, 'feedforward_size': 3072, 'hidden_size': 768, 'heads_num': 12, 'layers_num': 12, 'learning_rate': 2e-05, 'warmup': 0.1, 'batch_size': 32, 'dropout': 0.1, 'device': device(type='cuda'), 'epochs_num': 8, 't2d_path': './data/aida/ff_no_dup_test_samples_t2d', 'limaye_path': './data/aida/ff_no_dup_test_samples_limaye', 'wiki_path': './data/aida/ff_no_dup_test_samples_wikipedia', 'train_path': './data/aida/ff_train_samples', 'labels_map': {'Airline': 0, 'City': 1, 'Mayor': 2, 'Mountain': 3, 'Currency': 4, 'Saint': 5, 'BaseballPlayer': 6, 'Book': 7, 'Film': 8, 'Museum': 9, 'Genre': 10, 'Newspaper': 11, 'Lake': 12, 'Country': 13, 'Language': 14, 'Mammal': 15, 'Writer': 16, 'MovieDirector': 17, 'PoliticalParty': 18, 'AdministrativeRegion': 19, 'Airport': 20, 'GovernmentType': 21, 'Scientist': 22, 'MountainRange': 23, 'Plant': 24, 'University': 25, 'AcademicJournal': 26, 'Continent': 27, 'Monarch': 28, 'Company': 29, 'RadioStation': 30, 'Bird': 31, 'Building': 32, 'Hospital': 33, 'VideoGame': 34, 'SportsTeam': 35, 'Wrestler': 36}, 'labels_num': 37, 'logger': <Logger detail (DEBUG)>, 'logger_2': <Logger results (DEBUG)>, 'report_steps': 100}
+2021-01-08 15:28:31,293 - task_col_classifier.py [line:243] - INFO: Model sent to device: cuda:0/cuda
+2021-01-08 15:29:14,265 - task_col_classifier.py [line:225] - INFO: Epoch id: 1, Training steps: 100, Avg loss: 3.016
+2021-01-08 15:29:36,693 - task_col_classifier.py [line:225] - INFO: Epoch id: 1, Training steps: 200, Avg loss: 0.565
+2021-01-08 15:29:58,848 - task_col_classifier.py [line:225] - INFO: Epoch id: 1, Training steps: 300, Avg loss: 1.435
+2021-01-08 15:30:20,565 - task_col_classifier.py [line:225] - INFO: Epoch id: 1, Training steps: 400, Avg loss: 2.010
+2021-01-08 15:30:42,266 - task_col_classifier.py [line:225] - INFO: Epoch id: 1, Training steps: 500, Avg loss: 1.874
+2021-01-08 15:31:03,999 - task_col_classifier.py [line:225] - INFO: Epoch id: 1, Training steps: 600, Avg loss: 1.387
+2021-01-08 15:31:25,565 - task_col_classifier.py [line:225] - INFO: Epoch id: 1, Training steps: 700, Avg loss: 1.340
+2021-01-08 15:31:47,219 - task_col_classifier.py [line:225] - INFO: Epoch id: 1, Training steps: 800, Avg loss: 0.044
+2021-01-08 15:32:09,065 - task_col_classifier.py [line:225] - INFO: Epoch id: 1, Training steps: 900, Avg loss: 0.938
+2021-01-08 15:32:39,690 - task_col_classifier.py [line:225] - INFO: Epoch id: 2, Training steps: 100, Avg loss: 4.054
+2021-01-08 15:33:01,724 - task_col_classifier.py [line:225] - INFO: Epoch id: 2, Training steps: 200, Avg loss: 3.026
+2021-01-08 15:33:24,609 - task_col_classifier.py [line:225] - INFO: Epoch id: 2, Training steps: 300, Avg loss: 2.978
+2021-01-08 15:33:47,602 - task_col_classifier.py [line:225] - INFO: Epoch id: 2, Training steps: 400, Avg loss: 3.005
+2021-01-08 15:34:10,422 - task_col_classifier.py [line:225] - INFO: Epoch id: 2, Training steps: 500, Avg loss: 2.992
+2021-01-08 15:34:33,009 - task_col_classifier.py [line:225] - INFO: Epoch id: 2, Training steps: 600, Avg loss: 2.998
+2021-01-08 15:34:55,643 - task_col_classifier.py [line:225] - INFO: Epoch id: 2, Training steps: 700, Avg loss: 2.995
+2021-01-08 15:35:18,328 - task_col_classifier.py [line:225] - INFO: Epoch id: 2, Training steps: 800, Avg loss: 2.973
+2021-01-08 15:35:41,350 - task_col_classifier.py [line:225] - INFO: Epoch id: 2, Training steps: 900, Avg loss: 3.036
+2021-01-08 15:36:13,139 - task_col_classifier.py [line:225] - INFO: Epoch id: 3, Training steps: 100, Avg loss: 4.164
+2021-01-08 15:36:36,054 - task_col_classifier.py [line:225] - INFO: Epoch id: 3, Training steps: 200, Avg loss: 3.004
+2021-01-08 15:36:58,558 - task_col_classifier.py [line:225] - INFO: Epoch id: 3, Training steps: 300, Avg loss: 2.996
+2021-01-08 15:37:20,987 - task_col_classifier.py [line:225] - INFO: Epoch id: 3, Training steps: 400, Avg loss: 3.023
+2021-01-08 15:37:43,448 - task_col_classifier.py [line:225] - INFO: Epoch id: 3, Training steps: 500, Avg loss: 2.979
+2021-01-08 15:38:06,018 - task_col_classifier.py [line:225] - INFO: Epoch id: 3, Training steps: 600, Avg loss: 2.979
+2021-01-08 15:38:28,635 - task_col_classifier.py [line:225] - INFO: Epoch id: 3, Training steps: 700, Avg loss: 2.993
+2021-01-08 15:38:51,143 - task_col_classifier.py [line:225] - INFO: Epoch id: 3, Training steps: 800, Avg loss: 2.971
+2021-01-08 15:39:13,567 - task_col_classifier.py [line:225] - INFO: Epoch id: 3, Training steps: 900, Avg loss: 3.003
+2021-01-08 15:39:44,897 - task_col_classifier.py [line:225] - INFO: Epoch id: 4, Training steps: 100, Avg loss: 4.176
+2021-01-08 15:40:07,428 - task_col_classifier.py [line:225] - INFO: Epoch id: 4, Training steps: 200, Avg loss: 2.977
+2021-01-08 15:40:30,197 - task_col_classifier.py [line:225] - INFO: Epoch id: 4, Training steps: 300, Avg loss: 2.999
+2021-01-08 15:40:52,656 - task_col_classifier.py [line:225] - INFO: Epoch id: 4, Training steps: 400, Avg loss: 2.974
+2021-01-08 15:41:15,229 - task_col_classifier.py [line:225] - INFO: Epoch id: 4, Training steps: 500, Avg loss: 2.976
+2021-01-08 15:41:37,804 - task_col_classifier.py [line:225] - INFO: Epoch id: 4, Training steps: 600, Avg loss: 2.978
+2021-01-08 15:42:00,317 - task_col_classifier.py [line:225] - INFO: Epoch id: 4, Training steps: 700, Avg loss: 2.980

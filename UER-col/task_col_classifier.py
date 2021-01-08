@@ -227,8 +227,8 @@ def train(args, model):
 
         # args.logger.INFO()
         # if epoch % 4 == 0:
-        model.eval()
-        evaluate(args, model, epoch_id=epoch)
+        # model.eval()
+        # evaluate(args, model, epoch_id=epoch)
 
 
 
