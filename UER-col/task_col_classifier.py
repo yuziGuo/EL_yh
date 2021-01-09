@@ -227,24 +227,17 @@ def train_and_eval(args, model):
 
 def experiment(repeat_time, predefined_dict_groups=None):
     for _ in range(repeat_time):
+        logging.getLogger(args.logger_name).handlers = []  # https://stackoverflow.com/questions/7484454/removing-handlers-from-pythons-logging-loggers
         args = set_args(predefined_dict_groups=predefined_dict_groups)
-        args.logger.info('hi')
-        args.logger.warning('hehe')
-        # for handler in logging.getLogger(args.logger_name).handlers:
-        #     logging.getLogger(args.logger_name).removeHandler(handler)
-        # if len(logging.getLogger(args.logger_name).handlers) > 0:
-        #     logging.getLogger(args.logger_name).removeHandler(logging.getLogger(args.logger_name).handlers[0])
-        logging.getLogger(args.logger_name).handlers = []
-        # # logging.shutdown()
-        # model = col_classifier(args)
-        # load_or_initialize_parameters(args, model.encoder)
-        # model = model.to(args.device)
-        # if torch.cuda.device_count() > 1:
-        #     print("{} GPUs are available. Let's use them.".format(torch.cuda.device_count()))
-        #     model = torch.nn.DataParallel(model)
-        # # args.logger.info('Model sent to device: {}/{}'.format(model.state_dict()['output_layer_2.bias'].device, args.device))
-        # train_and_eval(args, model)
-
+        logger.warning('[For this run] Predefined_dict_groups: {}'.format(predefined_dict_groups))
+        model = col_classifier(args)
+        load_or_initialize_parameters(args, model.encoder)
+        model = model.to(args.device)
+        if torch.cuda.device_count() > 1:
+            print("{} GPUs are available. Let's use them.".format(torch.cuda.device_count()))
+            model = torch.nn.DataParallel(model)
+        args.logger.info('Model sent to device: {}/{}'.format(model.state_dict()['output_layer_2.bias'].device, args.device))
+        train_and_eval(args, model)
 
 
 if __name__ == '__main__':
