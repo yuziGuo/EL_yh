@@ -62,28 +62,19 @@ def set_args(predefined_dict_groups):
     args.t2d_path = './data/aida/ff_no_dup_test_samples_t2d'
     args.limaye_path = './data/aida/ff_no_dup_test_samples_limaye'
     args.wiki_path = './data/aida/ff_no_dup_test_samples_wikipedia'
-    # args.train_path = './data/aida/ff_train_samples'
-    # args.t2d_path = './data/aida/ff_test_samples_t2d'
-    # args.limaye_path = './data/aida/ff_test_samples_limaye'
-    # args.wiki_path = './data/aida/ff_test_samples_wikipedia'
-    # decode_and_verify_aida_file(args.train_path)
-    # decode_and_verify_aida_file(args.t2d_path)
-    # decode_and_verify_aida_file(args.limaye_path)
-    # decode_and_verify_aida_file(args.wiki_path)
 
     args.labels_map = get_labels_map_from_aida_file(args.train_path)
     args.labels_num = len(args.labels_map)
 
     # other options
+    args.report_steps = 100
     args.logger_name = 'detail'
     args.logger_dir_name = 'logs_col'
     args.logger_file_name = 'rec_all_1'
-    args.logger = get_logger(logger_name='detail', dir_name=args.logger_dir_name, file_name=args.logger_file_name)
-    args.report_steps = 100
-
     for predefined_dict_group in predefined_dict_groups.values():
         for k, v in predefined_dict_group.items():
             args[k] = v
+    args.logger = get_logger(logger_name='detail', dir_name=args.logger_dir_name, file_name=args.logger_file_name)
 
     return args
 
