@@ -227,9 +227,8 @@ def train_and_eval(args, model):
 
 def experiment(repeat_time, predefined_dict_groups=None):
     for _ in range(repeat_time):
-        logging.getLogger(args.logger_name).handlers = []  # https://stackoverflow.com/questions/7484454/removing-handlers-from-pythons-logging-loggers
         args = set_args(predefined_dict_groups=predefined_dict_groups)
-        logger.warning('[For this run] Predefined_dict_groups: {}'.format(predefined_dict_groups))
+        args.logger.warning('[For this run] Predefined_dict_groups: {}'.format(predefined_dict_groups))
         model = col_classifier(args)
         load_or_initialize_parameters(args, model.encoder)
         model = model.to(args.device)
@@ -238,6 +237,7 @@ def experiment(repeat_time, predefined_dict_groups=None):
             model = torch.nn.DataParallel(model)
         args.logger.info('Model sent to device: {}/{}'.format(model.state_dict()['output_layer_2.bias'].device, args.device))
         train_and_eval(args, model)
+        logging.getLogger(args.logger_name).handlers = []  # https://stackoverflow.com/questions/7484454/removing-handlers-from-pythons-logging-loggers
 
 
 if __name__ == '__main__':
