@@ -10,37 +10,33 @@ from uer.utils.vocab import Vocab
 from uer.utils.tokenizer import BertTokenizer
 
 
-def get_logger(option="detail", dir_name='logs_default', file_name='log_rec_all'):
-    logger = logging.getLogger(option)
+def get_logger(logger_name="detail", dir_name='logs_default', file_name='log_rec_all'):
+    logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG)  # Log等级总开关
 
-    if option == "detail":
-        if not os.path.exists(dir_name) or os.path.isfile(dir_name):
-            os.makedirs(dir_name)
-        rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
-        log_name = os.path.join(dir_name, rq) + '.log'
-        # add a file handler
-        logfile = log_name
-        fh = logging.FileHandler(logfile, mode='w')
-        fh.setLevel(logging.INFO)  # 输出到file的log等级的开关
-        formatter = logging.Formatter("%(asctime)s - %(filename)s [line:%(lineno)d] - %(levelname)s: %(message)s")
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
-        # add a console handler
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)  # DEBUG < INFO （more strict）
-        ch.setFormatter(formatter)
-        logger.addHandler(ch)
+    if not os.path.exists(dir_name) or os.path.isfile(dir_name):
+        os.makedirs(dir_name)
+    rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
+    detail_log_name = os.path.join(dir_name, rq) + '.log'
+    # add a file handler
+    fh = logging.FileHandler(detail_log_name, mode='w')
+    fh.setLevel(logging.INFO)  # 输出到file的log等级的开关
+    formatter = logging.Formatter("%(asctime)s - %(filename)s [line:%(lineno)d] - %(levelname)s: %(message)s")
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
 
-    if option == "results":
-        logfile = file_name
-        fh = logging.FileHandler(logfile, mode='a')
-        fh.setLevel(logging.INFO)  # 输出到file的log等级的开关
-        formatter = logging.Formatter("%(asctime)s - %(filename)s [#l:%(lineno)d] - %(message)s")
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
+    # add a console handler
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)  # DEBUG < INFO （more strict）
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
 
-
+    # another file handler
+    fh_2 = logging.FileHandler(file_name, mode='a')
+    fh_2.setLevel(logging.WARNING)  # 输出到file的log等级的开关
+    formatter = logging.Formatter("%(asctime)s - %(filename)s [#l:%(lineno)d] - %(message)s")
+    fh_2.setFormatter(formatter)
+    logger.addHandler(fh_2)
     return logger
 
 

@@ -1,6 +1,6 @@
 import torch
 from col_spec_yh.constants import *
-
+import random
 
 def generate_seg(args, cols, noise_num=0, row_wise_fill=False):
     '''

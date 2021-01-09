@@ -15,6 +15,7 @@ from demos.utils import load_or_initialize_parameters
 from demos.utils import batch_loader
 from demos.utils import get_logger
 
+import logging
 import random
 import os
 from collections import defaultdict
@@ -30,6 +31,7 @@ def set_args(predefined_dict_groups):
     args.mask_mode = 'crosswise'
     # args.pooling = 'avg-token'
     args.pooling = 'avg-cell-seg'
+    args.noise_num = 2
     args.seq_len = 90
 
     args.pretrained_model_path = "./models/bert_model.bin-000"
@@ -73,8 +75,8 @@ def set_args(predefined_dict_groups):
     args.labels_num = len(args.labels_map)
 
     # other options
-    args.logger = get_logger(option='detail', dir_name='logs_col')
-    args.logger_2 = get_logger(option='results', file_name='rec_all_1')
+    args.logger_name = 'detail'
+    args.logger = get_logger(logger_name='detail', dir_name='logs_col', file_name='rec_all_1')
     args.report_steps = 100
 
     for predefined_dict_group in predefined_dict_groups.values():
@@ -88,7 +90,7 @@ def read_dataset(args, data_path):
     dataset = []
     raw_tab_id_list, label_names, tab_cols_list = decode_and_verify_aida_file(data_path)
     for raw_tab_id, label_name, tab_col in zip(raw_tab_id_list, label_names, tab_cols_list):
-        tokens, seg = generate_seg(args, tab_col, row_wise_fill=True)
+        tokens, seg = generate_seg(args, tab_col, noise_num=2, row_wise_fill=True)
         label = args.labels_map.get(label_name)
         dataset.append((tokens, label, seg, raw_tab_id))
     return dataset
@@ -199,11 +201,8 @@ def evaluate(args, model, epoch_id=None):
         acc_score = accuracy_score(tab_level_ground_truth.data.cpu().numpy(),
                                    tab_level_preds.data.cpu().numpy())
 
-        args.logger.info("Epoch_id: {}\t DataSet: {}\tAcc: {}".format(
+        args.logger.warning("Epoch_id: {}\t DataSet: {}\tAcc: {}".format(
             epoch_id, os.path.basename(ds_path), acc_score
-        ))
-        args.logger_2.info("Epoch_id: {}\t DataSet: {}\tAcc: {}".format(
-            epoch_id, os.path.basename(ds_path).split('_')[-1], acc_score
         ))
 
 
@@ -236,16 +235,24 @@ def train_and_eval(args, model):
 def experiment(repeat_time, predefined_dict_groups=None):
     for _ in range(repeat_time):
         args = set_args(predefined_dict_groups=predefined_dict_groups)
-        args.logger.info('args: {}'.format(args))
-        args.logger_2.info('args: {}'.format(args))
-        model = col_classifier(args)
-        load_or_initialize_parameters(args, model.encoder)
-        model = model.to(args.device)
-        if torch.cuda.device_count() > 1:
-            print("{} GPUs are available. Let's use them.".format(torch.cuda.device_count()))
-            model = torch.nn.DataParallel(model)
-        # args.logger.info('Model sent to device: {}/{}'.format(model.state_dict()['output_layer_2.bias'].device, args.device))
-        train_and_eval(args, model)
+        args.logger.info('hi')
+        args.logger.warning('hehe')
+        # for handler in logging.getLogger(args.logger_name).handlers:
+        #     logging.getLogger(args.logger_name).removeHandler(handler)
+        # if len(logging.getLogger(args.logger_name).handlers) > 0:
+        #     logging.getLogger(args.logger_name).removeHandler(logging.getLogger(args.logger_name).handlers[0])
+        logging.getLogger(args.logger_name).handlers = []
+        # # logging.shutdown()
+        # model = col_classifier(args)
+        # load_or_initialize_parameters(args, model.encoder)
+        # model = model.to(args.device)
+        # if torch.cuda.device_count() > 1:
+        #     print("{} GPUs are available. Let's use them.".format(torch.cuda.device_count()))
+        #     model = torch.nn.DataParallel(model)
+        # # args.logger.info('Model sent to device: {}/{}'.format(model.state_dict()['output_layer_2.bias'].device, args.device))
+        # train_and_eval(args, model)
+
+
 
 if __name__ == '__main__':
     op_1_1 = {'repeat_time': 3}
