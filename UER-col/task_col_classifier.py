@@ -32,7 +32,7 @@ def set_args(predefined_dict_groups):
     # args.pooling = 'avg-token'
     args.pooling = 'avg-cell-seg'
     args.noise_num = 2
-    args.seq_len = 90
+    args.seq_len = 100
 
     args.pretrained_model_path = "./models/bert_model.bin-000"
     args.vocab_path = 'models/google_uncased_en_vocab.txt'
@@ -76,7 +76,9 @@ def set_args(predefined_dict_groups):
 
     # other options
     args.logger_name = 'detail'
-    args.logger = get_logger(logger_name='detail', dir_name='logs_col', file_name='rec_all_1')
+    args.logger_dir_name = 'logs_col'
+    args.logger_file_name = 'rec_all_1'
+    args.logger = get_logger(logger_name='detail', dir_name=args.logger_dir_name, file_name=args.logger_file_name)
     args.report_steps = 100
 
     for predefined_dict_group in predefined_dict_groups.values():
@@ -255,7 +257,6 @@ def experiment(repeat_time, predefined_dict_groups=None):
 
 
 if __name__ == '__main__':
-    op_1_1 = {'repeat_time': 3}
     op_2_1 = {'pooling':'avg-cell-seg'}
     op_2_2 = {'pooling': 'seg'}
     op_2_3 = {'pooling': 'avg-tokens'}
@@ -264,19 +265,23 @@ if __name__ == '__main__':
         "t2d_path" : './data/aida/ff_no_dup_test_samples_t2d',
         "limaye_path" : './data/aida/ff_no_dup_test_samples_limaye',
         "wiki_path" : './data/aida/ff_no_dup_test_samples_wikipedia',
-        "epochs_num" : 40,
+        "epochs_num" : 30,
     }
     op_3_2 = {
         "train_path" : './data/aida/ff_train_samples',
         "t2d_path" : './data/aida/ff_test_samples_t2d',
         "limaye_path" : './data/aida/ff_test_samples_limaye',
         "wiki_path" : './data/aida/ff_test_samples_wikipedia',
-        "epochs_num" : 8,
+        "epochs_num" : 6,
     }
 
     for ds_options in [op_3_1, op_3_2]:
-        for pooling_options in [op_2_1, op_2_2, op_2_3]:
+        for pooling_options in [op_2_3, op_2_1, op_2_2]:
             predefined_dict_groups = {
+                                      'debug_options':{
+                                          'logger_dir_name':'log_debug',
+                                          'logger_file_name':'rec_all_debug'
+                                      },
                                       'pooling_set_group':pooling_options,
                                       'ds_set_group':ds_options
                                       }
