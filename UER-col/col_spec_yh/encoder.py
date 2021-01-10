@@ -21,6 +21,7 @@ class BertTabEncoder(nn.Module):
         super(BertTabEncoder, self).__init__()
         self.layers_num = args.layers_num
         self.mask_mode = args.mask_mode
+        self.skip_level_ban = args.mask_skip_level_ban
         self.transformer = nn.ModuleList([
             TransformerLayer(args) for _ in range(self.layers_num)
         ])
@@ -51,7 +52,7 @@ class BertTabEncoder(nn.Module):
         # mask: [batch_size x 1 x seq_length x seq_length]
 
         assert self.mask_mode in ['row-wise', 'col-wise', 'cross-wise', 'cross-and-hier-wise']
-        mask = generate_mask(seg, self.mask_mode)
+        mask = generate_mask(seg, self.mask_mode, self.skip_level_ban)
         mask = (mask > 0).float()
         mask = (1.0 - mask) * -10000.0
         hidden = emb

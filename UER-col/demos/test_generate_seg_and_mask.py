@@ -1,5 +1,5 @@
 from col_spec_yh.encode_utils import generate_seg
-from col_spec_yh.encode_utils import generate_mask_crosswise
+from col_spec_yh.encode_utils import generate_mask
 
 from demos.samples.sample_mini_tables import table_a, table_b, table_with_empty_values_1, table_with_empty_values_2
 from demos.utils import get_args
@@ -44,7 +44,7 @@ def test_1():
     tokens_1, seg_1 = generate_seg(args, table_b, row_wise_fill=True)
     seg = torch.LongTensor([seg_0, seg_1])
     check_segs(zip([seg_0, seg_1], [tokens_0, tokens_1]))
-    mask = generate_mask_crosswise(seg)
+    mask = generate_mask(seg)
     import ipdb; ipdb.set_trace()
 
 
@@ -55,7 +55,7 @@ def test_3():
     tokens_1, seg_1 = generate_seg(args, table_with_empty_values_2, row_wise_fill=True)
     seg = torch.LongTensor([seg_0, seg_1])
     check_segs(zip([seg_0, seg_1], [tokens_0, tokens_1]))
-    mask = generate_mask_crosswise(seg)
+    mask = generate_mask(seg)
     import ipdb; ipdb.set_trace()
 
 def test_2():
@@ -69,10 +69,22 @@ def test_2():
         _, seg = generate_seg(args, tab_col, row_wise_fill=True)
         seg_list.append(seg)
     seg = torch.LongTensor(seg_list)
-    mask = generate_mask_crosswise(seg)  # mask.shape: torch.Size([10, 1, 64, 64])
+    mask = generate_mask(seg)  # mask.shape: torch.Size([10, 1, 64, 64])
     import ipdb; ipdb.set_trace()
 
+def test_4():
+    args = get_args()
+    args.seq_len = 128
+    tokens_0, seg_0 = generate_seg(args, table_a, row_wise_fill=True)
+    tokens_1, seg_1 = generate_seg(args, table_b, row_wise_fill=True)
+    seg = torch.LongTensor([seg_0, seg_1])
+    check_segs(zip([seg_0, seg_1], [tokens_0, tokens_1]))
+    mask = generate_mask(seg, skip_level_ban=True)
+    import ipdb; ipdb.set_trace()
+
+
 if __name__=='__main__':
+    test_4()
     test_3()
     test_1()
     test_2()

@@ -58,32 +58,36 @@ def generate_seg(args, cols, noise_num=0, row_wise_fill=False):
     return tokens, seg
 
 
-def generate_mask(seg, mask_mode='crosswise'):
+def generate_mask(seg, mask_mode='cross-wise', skip_level_ban=False):
     '''
     :param seg -> torch.LongTensor          shape: [bz, seq_len]
     :return: mask -> torch.FloatTensor      shape: [bz, 1, seq_len, seq_len]
     '''
     bz, seq_len = seg.shape
-    seg = seg % 10000
-
-    # cls_see_all_mask = (seg > 0).float()  # [bz, seq_len]
-    # cls_see_all_mask = cls_see_all_mask.view(bz, 1, 1, seq_len)
-
     seg = seg.view(bz, seq_len, 1)
     seg_2 = seg.view(bz, 1, seq_len)
+    if skip_level_ban:
+        skip_level_see_mask = 1 - ((seg>20000) * (seg_2<20000)).float().unsqueeze(1)
+    else:
+        skip_level_see_mask = torch.ones(bz, 1, seq_len, seq_len)
+        skip_level_see_mask.to(seg.device)
+    seg = seg % 10000
+    seg_2 = seg_2 % 10000
+    # cls_see_all_mask = (seg > 0).float()  # [bz, seq_len]
+    # cls_see_all_mask = cls_see_all_mask.view(bz, 1, 1, seq_len)
     row_wise_see = (seg % 100 == seg_2 % 100).unsqueeze(1).float()  # mask: [batch_size x 1 x seq_length x seq_length]
     if mask_mode == 'row-wise':
-        return row_wise_see
+        return row_wise_see*skip_level_see_mask
     col_wise_see = (seg // 100 == seg_2 // 100).unsqueeze(1).float()*2
     if mask_mode == 'col-wise':
-        return col_wise_see
+        return col_wise_see*skip_level_see_mask
     if mask_mode == 'cross-wise':
         mask = row_wise_see + col_wise_see
-        return mask
+        return mask*skip_level_see_mask
     hier_tab_col_see = ((seg % 100 > 90) * (seg_2 % 100 > 90)).unsqueeze(1).float() * 4
     if mask_mode == 'cross-and-hier-wise':
         mask = row_wise_see + col_wise_see + hier_tab_col_see
-        return mask
+        return mask*skip_level_see_mask
     # mask = torch.cat((cls_see_all_mask, mask[:, :, 1:, :]), dim=-2)
     # then we can use 1,2,3.. (or more possible cnt numbers) to distinguish different relations -> relation-aware attention
 

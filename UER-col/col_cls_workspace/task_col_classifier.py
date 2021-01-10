@@ -29,6 +29,7 @@ def set_args(predefined_dict_groups):
     # options for model
     args = Bunch()
     args.mask_mode = 'cross-wise'  # in ['row_wise', 'col_wise', 'cross_wise', 'cross_and_hier_wise']
+    args.mask_skip_level_ban = False
     # args.pooling = 'avg-token'
     args.pooling = 'avg-cell-seg'
     args.table_object = 'first-column'
