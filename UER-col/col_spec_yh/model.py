@@ -84,7 +84,13 @@ class TabEncoder(nn.Module):
                 emb_cols = scatter_mean(src=output[_idxs[0], _idxs[1], :], index=_idxs[0], dim=-2)
                 return emb_cols
             if self.pooling == 'avg-token': # (>1)01__
+                # _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float() * (seg > 10000).float()).T
+                _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float() * (seg > 20000).float()).T
+                emb_cols = scatter_mean(src=output[_idxs[0], _idxs[1], :], index=_idxs[0], dim=-2) # [bz, emb_size]
+                return emb_cols
+            if self.pooling == 'avg-token-and-cell-segs': # (>1)01__
                 _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float() * (seg > 10000).float()).T
+                # _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float() * (seg > 20000).float()).T
                 emb_cols = scatter_mean(src=output[_idxs[0], _idxs[1], :], index=_idxs[0], dim=-2) # [bz, emb_size]
                 return emb_cols
 
