@@ -58,7 +58,7 @@ def generate_seg(args, cols, noise_num=0, row_wise_fill=False):
     return tokens, seg
 
 
-def generate_mask_crosswise(seg):
+def generate_mask(seg, mask_mode='crosswise'):
     '''
     :param seg -> torch.LongTensor          shape: [bz, seq_len]
     :return: mask -> torch.FloatTensor      shape: [bz, 1, seq_len, seq_len]
@@ -71,16 +71,22 @@ def generate_mask_crosswise(seg):
 
     seg = seg.view(bz, seq_len, 1)
     seg_2 = seg.view(bz, 1, seq_len)
-
     row_wise_see = (seg % 100 == seg_2 % 100).unsqueeze(1).float()  # mask: [batch_size x 1 x seq_length x seq_length]
+    if mask_mode == 'row-wise':
+        return row_wise_see
     col_wise_see = (seg // 100 == seg_2 // 100).unsqueeze(1).float()*2
+    if mask_mode == 'col-wise':
+        return col_wise_see
+    if mask_mode == 'cross-wise':
+        mask = row_wise_see + col_wise_see
+        return mask
     hier_tab_col_see = ((seg % 100 > 90) * (seg_2 % 100 > 90)).unsqueeze(1).float() * 4
-
-    # import ipdb; ipdb.set_trace()
-    mask = row_wise_see + col_wise_see + hier_tab_col_see
+    if mask_mode == 'cross-and-hier-wise':
+        mask = row_wise_see + col_wise_see + hier_tab_col_see
+        return mask
     # mask = torch.cat((cls_see_all_mask, mask[:, :, 1:, :]), dim=-2)
     # then we can use 1,2,3.. (or more possible cnt numbers) to distinguish different relations -> relation-aware attention
-    return mask
+
 
 
 def get_sep_idxs(seg, option):

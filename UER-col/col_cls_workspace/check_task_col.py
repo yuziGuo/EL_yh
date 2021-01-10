@@ -1,4 +1,4 @@
-from task_col_classifier import *
+from col_cls_workspace.task_col_classifier import *
 from demos.test_generate_seg_and_mask import check_segs_general
 
 def check(predefined_dict_groups=None):

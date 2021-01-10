@@ -1,49 +1,69 @@
 # -*- encoding:utf-8 -*-
-# author : Guo Yuhe
-
-import torch
 import torch.nn as nn
+from uer.layers.layer_norm import LayerNorm
+from uer.layers.position_ffn import PositionwiseFeedForward
+from uer.layers.multi_headed_attn import MultiHeadedAttention
+from uer.layers.transformer import TransformerLayer, RelationAwareTransformerLayer
+import torch
+import time
 
-from uer.layers.embeddings import BertEmbedding, WordEmbedding
-from uer.encoders.bert_encoder import BertEncoder
+from col_spec_yh.encode_utils import generate_mask
 
-class TabEncoder(nn.Module):
+class BertTabEncoder(nn.Module):
+    """
+    BERT encoder exploits 12 or 24 transformer layers to extract features.
+    """
     def __init__(self, args):
-        super(TabEncoder, self).__init__()
-        self.embedding = globals()[args.embedding.capitalize() + "Embedding"](args, len(args.vocab))
-        self.encoder = globals()[args.encoder.capitalize() + "Encoder"](args)
-        self.pooling = args.pooling
-        # self.output_layer_1 = nn.Linear(args.hidden_size, args.hidden_size)
+        super(BertTabEncoder, self).__init__()
+        self.layers_num = args.layers_num
+        self.mask_mode = args.mask_mode
+        self.transformer = nn.ModuleList([
+            TransformerLayer(args) for _ in range(self.layers_num)
+        ])
 
-    def forward(self, src, mask):
-        import ipdb; ipdb.set_trace()
-        emb = self.embedding(src, mask)  # [8, 64, 768]
-        output = self.encoder(emb, mask)  # # [8, 64, 768]
+        # todo: add cross_wise_rel option
+        # if args.mask_mode=='crosswise_rel':
+        #     hidden_size = args.emb_size // args.heads_num
+        #     relations = {'masked':0, 'col':1, 'row':2, 'in_cell':3}
+        #     self.relationEmbedding_K = nn.Embedding(len(relations), hidden_size)
+        #     self.relationEmbedding_V = nn.Embedding(len(relations), hidden_size)
+        #     self.transformer = nn.ModuleList([
+        #         RelationAwareTransformerLayer(args) for _ in range(self.layers_num)
+        #     ])
+        # else:
+        #     self.transformer = nn.ModuleList([
+        #         TransformerLayer(args) for _ in range(self.layers_num)
+        #     ])
 
-        # Target.
-        if self.pooling == "mean":
-            from torch_scatter import scatter_mean, scatter_max
-            ex_mask = (mask // 100).unsqueeze(-1).expand(-1, -1, output.size(-1))
-            _ = scatter_mean(src=output, index=ex_mask, dim=-2)  # [batch_size, col_num+1, 768]
-            output = _[:,1:,:]  # columns
-        elif self.pooling == "max":
-            from torch_scatter import scatter_mean, scatter_max
-            ex_mask = (mask // 100).unsqueeze(-1).expand(-1, -1, output.size(-1))
-            _ = scatter_max(src=output, index=ex_mask, dim=-2)[0]
-            output = _[:,1:,:]
-        elif self.pooling == "last":
-            output = output[:, -1, :]
-        elif self.pooling == 'bert':
-            output = output[:, 0, :]
-        elif self.pooling == 'crosswise-bert':
-            mask = (mask % 100 == 1).float() * mask
-            _t = torch.FloatTensor([-10000]).repeat(mask.size()[0]).unsqueeze(-1).to(mask.device)
-            _for_calc = torch.cat((_t, mask[:, :-1]), 1)
-            _idxs = torch.nonzero(((mask - _for_calc)>0).float()).T
-            try:
-                output = output[_idxs[0], _idxs[1], :].reshape(mask.shape[0], -1, emb.shape[-1])  # [bz,col_num,768]
-            except Exception as e:
-                print(e)
-        print(output.shape)
-        # output = torch.tanh(self.output_layer_1(output))  # output: [batch_size, emb_size]  #
-        return output
+
+    def forward(self, emb, seg):
+        """
+        Args:
+            emb: [batch_size x seq_length x emb_size]
+            seg: [batch_size x seq_length]
+
+        Returns:
+            hidden: [batch_size x seq_length x hidden_size]
+        """
+
+        # Generate mask according to segment indicators.
+        # mask: [batch_size x 1 x seq_length x seq_length]
+        mask = generate_mask(seg, self.mask_mode)  # possible values in mask: combinations of (0,1,2,4)
+        mask = (mask > 0).float()
+        mask = (1.0 - mask) * -10000.0
+        hidden = emb
+        layers = list(range(self.layers_num))
+        for i in layers:
+            hidden = self.transformer[i](hidden, mask)
+
+        # TODO:
+        # if self.mask_mode == 'crosswise_rel':
+        #     mask = self.get_mask_crosswise(seg)
+        #     # mask = (1.0 - mask) * -10000.0
+        #     hidden = emb
+        #     # self.layers_num = 4
+        #     layers = list(range(self.layers_num))
+        #     for i in layers:
+        #         hidden = self.transformer[i](hidden, mask, self.relationEmbedding_K, self.relationEmbedding_V)  # in mask: 0,1,2,3
+
+        return hidden

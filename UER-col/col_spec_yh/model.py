@@ -4,18 +4,20 @@
 import torch
 import torch.nn as nn
 
-from uer.encoders.bert_encoder import BertEncoder
 from torch_scatter import scatter_mean
 
 from col_spec_yh.embedding import TabEmbedding
+from col_spec_yh.encoder import BertTabEncoder
 from col_spec_yh.encode_utils import get_sep_idxs
 
 class TabEncoder(nn.Module):
     def __init__(self, args):
         super(TabEncoder, self).__init__()
         self.embedding = globals()[args.embedding.capitalize() + "Embedding"](args, len(args.vocab))
-        self.encoder = globals()[args.encoder.capitalize() + "Encoder"](args)
+        # self.encoder = globals()[args.encoder.capitalize() + "Encoder"](args)
+        self.encoder = BertTabEncoder(args)
         self.pooling = args.pooling
+        # self.table_object = args.table_object
         # self.output_layer_1 = nn.Linear(args.hidden_size, args.hidden_size)
 
 

@@ -1,5 +1,5 @@
 from col_spec_yh.encode_utils import generate_seg
-from col_spec_yh.encode_utils import generate_mask_crosswise
+from col_spec_yh.encode_utils import generate_mask
 from col_spec_yh.model import TabEncoder
 
 from sklearn.utils import Bunch
@@ -28,9 +28,10 @@ from col_spec_yh.store_utils import decode_and_verify_aida_file, get_labels_map_
 def set_args(predefined_dict_groups):
     # options for model
     args = Bunch()
-    args.mask_mode = 'crosswise'
+    args.mask_mode = 'cross-wise'  # in ['row_wise', 'col_wise', 'cross_wise', 'cross_and_hier_wise']
     # args.pooling = 'avg-token'
     args.pooling = 'avg-cell-seg'
+    args.table_object = 'first-column'
     args.noise_num = 2
     args.seq_len = 100
 
@@ -40,11 +41,9 @@ def set_args(predefined_dict_groups):
     args.vocab.load(args.vocab_path)
     args.emb_size = 768
     args.embedding = 'tab'  # before: bert
-    args.encoder = 'bert'
+    args.encoder = 'bertTab'
     args.subword_type = 'none'
-
     args.tokenizer = 'bert'
-    args.tokenizer = globals()[args.tokenizer.capitalize() + "Tokenizer"](args)
 
     args.feedforward_size = 3072
     args.hidden_size = 768
@@ -64,17 +63,17 @@ def set_args(predefined_dict_groups):
     args.limaye_path = './data/aida/ff_no_dup_test_samples_limaye'
     args.wiki_path = './data/aida/ff_no_dup_test_samples_wikipedia'
 
-    args.labels_map = get_labels_map_from_aida_file(args.train_path)
-    args.labels_num = len(args.labels_map)
-
     # other options
     args.report_steps = 100
     args.logger_name = 'detail'
-    args.logger_dir_name = 'logs_col'
+    args.logger_dir_name = 'col_cls_workspace/logs_col'
     args.logger_file_name = 'rec_all_1'
     for predefined_dict_group in predefined_dict_groups.values():
         for k, v in predefined_dict_group.items():
             args[k] = v
+    args.labels_map = get_labels_map_from_aida_file(args.train_path)
+    args.labels_num = len(args.labels_map)
+    args.tokenizer = globals()[args.tokenizer.capitalize() + "Tokenizer"](args)
     if args.logger_dir_name is not None:
         args.logger = get_logger(logger_name='detail', dir_name=args.logger_dir_name, file_name=args.logger_file_name)
     else:
@@ -101,13 +100,15 @@ class col_classifier(nn.Module):
         super(col_classifier, self).__init__()
         self.labels_num = args.labels_num
         self.encoder = TabEncoder(args)
+        self.table_object = args.table_object
         self.output_layer_1 = nn.Linear(args.hidden_size, args.hidden_size)
         self.output_layer_2 = nn.Linear(args.hidden_size, self.labels_num)
         self.criterion = nn.NLLLoss()
 
     def forward(self, src, seg, tgt=None):
         # output = self.encoder.encode(src, seg, option='first-column')
-        output = self.encoder.encode(src, seg, option='first-cell')
+        # import ipdb; ipdb.set_trace()
+        output = self.encoder.encode(src, seg, option=self.table_object)
         output = torch.tanh(self.output_layer_1(output))
         logits = self.output_layer_2(output)
         if tgt is not None:
@@ -235,6 +236,7 @@ def experiment(repeat_time, predefined_dict_groups=None):
         args = set_args(predefined_dict_groups=predefined_dict_groups)
         if args.logger:
             args.logger.warning('[For this run] Predefined_dict_groups: {}'.format(predefined_dict_groups))
+        args.logger.info('Args: {}'.format(args))
         model = col_classifier(args)
         load_or_initialize_parameters(args, model.encoder)
         model = model.to(args.device)
@@ -249,36 +251,36 @@ def experiment(repeat_time, predefined_dict_groups=None):
 
 
 if __name__ == '__main__':
-    op_2_1 = {'pooling':'avg-cell-seg'}
-    op_2_2 = {'pooling': 'seg'}
-    op_2_3 = {'pooling': 'avg-token'}
+    # op_2_1 = {'pooling': 'avg-cell-seg'}
+    # op_2_2 = {'pooling': 'seg'}
+    op_2_1 = {'pooling': 'avg-token', 'mask_mode': 'cross-wise'}
+    op_2_2 = {'pooling': 'avg-token', 'mask_mode': 'row-wise'}
+
     op_3_1 = {
-        "train_path" : './data/aida/ff_no_dup_train_samples',
-        "t2d_path" : './data/aida/ff_no_dup_test_samples_t2d',
-        "limaye_path" : './data/aida/ff_no_dup_test_samples_limaye',
-        "wiki_path" : './data/aida/ff_no_dup_test_samples_wikipedia',
-        "epochs_num" : 30,
+        "train_path": './data/aida/ff_no_dup_train_samples',
+        "t2d_path": './data/aida/ff_no_dup_test_samples_t2d',
+        "limaye_path": './data/aida/ff_no_dup_test_samples_limaye',
+        "wiki_path": './data/aida/ff_no_dup_test_samples_wikipedia',
+        "epochs_num": 30,
     }
     op_3_2 = {
-        "train_path" : './data/aida/ff_train_samples',
-        "t2d_path" : './data/aida/ff_test_samples_t2d',
-        "limaye_path" : './data/aida/ff_test_samples_limaye',
-        "wiki_path" : './data/aida/ff_test_samples_wikipedia',
-        "epochs_num" : 6,
+        "train_path": './data/aida/ff_train_samples',
+        "t2d_path": './data/aida/ff_test_samples_t2d',
+        "limaye_path": './data/aida/ff_test_samples_limaye',
+        "wiki_path": './data/aida/ff_test_samples_wikipedia',
+        "epochs_num": 6,
     }
 
     # for ds_options in [op_3_1, op_3_2]:
-    for ds_options in [op_3_2]:
-        # for pooling_options in [op_2_3, op_2_2]:  --process_1
-        # for pooling_options in [op_2_1]: # process_2
-        for pooling_options in [op_2_3]: # process_2
+    for ds_options in [op_3_2, op_3_2]:
+        for key_options in [op_2_1,op_2_2]: # process_2
             predefined_dict_groups = {
                                       'debug_options':{
                                           'logger_dir_name':'log_debug_recover_dup',
                                           'logger_file_name':'rec_all_debug_recover_dup'
                                       },
-                                      'pooling_set_group':pooling_options,
+                                      'key_set_group':key_options,
                                       'ds_set_group':ds_options
                                       }
             print(predefined_dict_groups)
-            experiment(repeat_time=3, predefined_dict_groups=predefined_dict_groups)
+            experiment(repeat_time=1, predefined_dict_groups=predefined_dict_groups)

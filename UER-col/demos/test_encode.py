@@ -3,7 +3,7 @@ from demos.samples.sample_mini_tables import table_a, table_b
 from utils import get_args, load_or_initialize_parameters
 from col_spec_yh.model import TabEncoder
 from col_spec_yh.encode_utils import generate_seg
-from col_spec_yh.encode_utils import generate_mask_crosswise
+from col_spec_yh.encode_utils import generate_mask
 
 args = get_args()
 

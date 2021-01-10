@@ -44,7 +44,7 @@ def get_logger(logger_name="detail", dir_name='logs_default', file_name='log_rec
 
 def get_args():
     args = Bunch()
-    args.mask_mode = 'crosswise'
+    args.mask_mode = 'cross-wise'
     args.seq_len = 64
 
     args.pretrained_model_path = "./models/bert_model.bin-000"
@@ -53,7 +53,7 @@ def get_args():
     args.vocab.load(args.vocab_path)
     args.emb_size = 768
     args.embedding = 'tab'  # before: bert
-    args.encoder = 'bert'
+    args.encoder = 'bertTab'
     args.subword_type = 'none'
     args.pooling = 'avg'  # before: crosswise-bert
     args.tokenizer = 'bert'
