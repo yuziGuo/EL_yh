@@ -75,16 +75,24 @@ class TabEncoder(nn.Module):
             return emb_cols
 
         if option == 'first-column':
-            # import ipdb; ipdb.set_trace()
             if self.pooling == 'seg':
                 return output[:,1,:]
             if self.pooling == 'avg-cell-seg':
-                _idxs = torch.nonzero((seg>=10100).float()*(seg<10200).float()).T
+                _idxs = torch.nonzero((seg>=10100).float()*(seg<10200).float()).T  # 10101 # 10102 ..
                 emb_cols = scatter_mean(src=output[_idxs[0], _idxs[1], :], index=_idxs[0], dim=-2)
                 return emb_cols
-            if self.pooling == 'avg-token':
-                _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float()).T
+            if self.pooling == 'avg-token': # (>1)01__
+                _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float() * (seg > 10000).float()).T
                 emb_cols = scatter_mean(src=output[_idxs[0], _idxs[1], :], index=_idxs[0], dim=-2) # [bz, emb_size]
+                return emb_cols
+
+        if option == 'first-cell':
+            if self.pooling == 'seg':
+                col_num = torch.max(seg % 10000 // 100).item()
+                return output[:,col_num+1,:]
+            if self.pooling == 'avg-token':  # 01～/01/01
+                _idxs = torch.nonzero( (seg % 10000== 101).float() ).T
+                emb_cols = scatter_mean(src=output[_idxs[0], _idxs[1], :], index=_idxs[0], dim=-2)
                 return emb_cols
 
 

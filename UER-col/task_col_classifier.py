@@ -51,6 +51,7 @@ def set_args(predefined_dict_groups):
     args.heads_num = 12
     args.layers_num = 12
     args.learning_rate = 2e-5
+    # args.learning_rate = 1e-4
     args.warmup = 0.1
     args.batch_size = 32
     args.dropout = 0.1
@@ -74,14 +75,17 @@ def set_args(predefined_dict_groups):
     for predefined_dict_group in predefined_dict_groups.values():
         for k, v in predefined_dict_group.items():
             args[k] = v
-    args.logger = get_logger(logger_name='detail', dir_name=args.logger_dir_name, file_name=args.logger_file_name)
-
+    if args.logger_dir_name is not None:
+        args.logger = get_logger(logger_name='detail', dir_name=args.logger_dir_name, file_name=args.logger_file_name)
+    else:
+        args.logger = None
     return args
 
 
 def read_dataset(args, data_path):
     dataset = []
     raw_tab_id_list, label_names, tab_cols_list = decode_and_verify_aida_file(data_path)
+
     for raw_tab_id, label_name, tab_col in zip(raw_tab_id_list, label_names, tab_cols_list):
         tokens, seg = generate_seg(args, tab_col, noise_num=2, row_wise_fill=True)
         label = args.labels_map.get(label_name)
@@ -102,7 +106,8 @@ class col_classifier(nn.Module):
         self.criterion = nn.NLLLoss()
 
     def forward(self, src, seg, tgt=None):
-        output = self.encoder.encode(src, seg, option='first-column')
+        # output = self.encoder.encode(src, seg, option='first-column')
+        output = self.encoder.encode(src, seg, option='first-cell')
         output = torch.tanh(self.output_layer_1(output))
         logits = self.output_layer_2(output)
         if tgt is not None:
@@ -193,10 +198,10 @@ def evaluate(args, model, epoch_id=None):
         tab_level_ground_truth, tab_level_preds = reduce_to_tab_level(logits_all, ds)
         acc_score = accuracy_score(tab_level_ground_truth.data.cpu().numpy(),
                                    tab_level_preds.data.cpu().numpy())
-
-        args.logger.warning("Epoch_id: {}\t DataSet: {}\tAcc: {}".format(
-            epoch_id, os.path.basename(ds_path), acc_score
-        ))
+        if args.logger:
+            args.logger.warning("Epoch_id: {}\t DataSet: {}\tAcc: {}".format(
+                epoch_id, os.path.basename(ds_path), acc_score
+            ))
 
 
 def train_and_eval(args, model):
@@ -228,22 +233,25 @@ def train_and_eval(args, model):
 def experiment(repeat_time, predefined_dict_groups=None):
     for _ in range(repeat_time):
         args = set_args(predefined_dict_groups=predefined_dict_groups)
-        args.logger.warning('[For this run] Predefined_dict_groups: {}'.format(predefined_dict_groups))
+        if args.logger:
+            args.logger.warning('[For this run] Predefined_dict_groups: {}'.format(predefined_dict_groups))
         model = col_classifier(args)
         load_or_initialize_parameters(args, model.encoder)
         model = model.to(args.device)
         if torch.cuda.device_count() > 1:
             print("{} GPUs are available. Let's use them.".format(torch.cuda.device_count()))
             model = torch.nn.DataParallel(model)
-        args.logger.info('Model sent to device: {}/{}'.format(model.state_dict()['output_layer_2.bias'].device, args.device))
+        if args.logger:
+            args.logger.info('Model sent to device: {}/{}'.format(model.state_dict()['output_layer_2.bias'].device, args.device))
         train_and_eval(args, model)
-        logging.getLogger(args.logger_name).handlers = []  # https://stackoverflow.com/questions/7484454/removing-handlers-from-pythons-logging-loggers
+        if args.logger:
+            logging.getLogger(args.logger_name).handlers = []  # https://stackoverflow.com/questions/7484454/removing-handlers-from-pythons-logging-loggers
 
 
 if __name__ == '__main__':
     op_2_1 = {'pooling':'avg-cell-seg'}
     op_2_2 = {'pooling': 'seg'}
-    op_2_3 = {'pooling': 'avg-tokens'}
+    op_2_3 = {'pooling': 'avg-token'}
     op_3_1 = {
         "train_path" : './data/aida/ff_no_dup_train_samples',
         "t2d_path" : './data/aida/ff_no_dup_test_samples_t2d',
@@ -259,12 +267,15 @@ if __name__ == '__main__':
         "epochs_num" : 6,
     }
 
-    for ds_options in [op_3_1, op_3_2]:
-        for pooling_options in [op_2_3, op_2_1, op_2_2]:
+    # for ds_options in [op_3_1, op_3_2]:
+    for ds_options in [op_3_2]:
+        # for pooling_options in [op_2_3, op_2_2]:  --process_1
+        # for pooling_options in [op_2_1]: # process_2
+        for pooling_options in [op_2_3]: # process_2
             predefined_dict_groups = {
                                       'debug_options':{
-                                          'logger_dir_name':'log_debug',
-                                          'logger_file_name':'rec_all_debug'
+                                          'logger_dir_name':'log_debug_recover_dup',
+                                          'logger_file_name':'rec_all_debug_recover_dup'
                                       },
                                       'pooling_set_group':pooling_options,
                                       'ds_set_group':ds_options

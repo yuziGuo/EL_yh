@@ -28,3 +28,13 @@ table_b = [
         'Calgary Centennials (WCHL)'
     ]
  ]
+
+table_with_empty_values_1 = [
+    ['',    '',     ''],
+    ['',    'apple',     '']
+]
+
+table_with_empty_values_2 = [
+    ['',    '',     ''],
+    ['',    '',     '']
+]

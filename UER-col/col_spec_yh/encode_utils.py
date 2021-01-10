@@ -12,7 +12,7 @@ def generate_seg(args, cols, noise_num=0, row_wise_fill=False):
     :return: tokens -> List[int]; seg -> List[int]
     '''
     tokens = [CLS_ID]
-    seg = [99]
+    seg = [9999]
     if not row_wise_fill:
         pass
         # for idx_c, col in enumerate(cols, 1):  # start from 1
@@ -29,7 +29,7 @@ def generate_seg(args, cols, noise_num=0, row_wise_fill=False):
         for idx_c in range(1, len(cols) + 1):
             idx_r = 98 # fake
             seg.append(100*idx_c+idx_r)
-            tokens.append(SEP_ID)
+            tokens.append(CLS_ID)
         for idx_r in range(1, len(cols[0])+1):
             for idx_c in range(1, len(cols) + 1):
                 # import ipdb; ipdb.set_trace()
@@ -38,12 +38,15 @@ def generate_seg(args, cols, noise_num=0, row_wise_fill=False):
                 except:
                     IndexError
                     import ipdb; ipdb.set_trace()
-                # temp = [SEP_ID]
+
                 temp = args.tokenizer.convert_tokens_to_ids(args.tokenizer.tokenize(dataframe))[:dataframe_max_len-2]
-                temp += [SEP_ID]
-                tokens.extend(temp)
-                for idx_tok in range(1, len(temp)+1):
-                    seg.append(idx_tok*10000 + idx_c*100 +idx_r)
+                if len(temp) == 0:
+                    continue
+                else:
+                    temp = [CLS_ID] + temp
+                    tokens.extend(temp)
+                    for idx_tok in range(1, len(temp)+1):
+                        seg.append(idx_tok*10000 + idx_c*100 +idx_r)
         tokens = tokens[:args.seq_len]
         seg = seg[:args.seq_len]
     while len(tokens) < args.seq_len:
