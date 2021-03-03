@@ -78,26 +78,29 @@ class TabEncoder(nn.Module):
 
         if option == 'first-column':
             if self.pooling == 'seg':
+                # todo
                 return output[:,1,:]
             if self.pooling == 'avg-cell-seg':
-                _idxs = torch.nonzero((seg>=10100).float()*(seg<10200).float()).T  # 10101 # 10102 ..
+                _idxs = torch.nonzero((seg>=100).float()*(seg<198).float()).T  # 10101 # 10102 ..
                 emb_cols = scatter_mean(src=output[_idxs[0], _idxs[1], :], index=_idxs[0], dim=-2)
                 return emb_cols
             if self.pooling == 'avg-token': # (>1)01__
-                # _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float() * (seg > 10000).float()).T
-                _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float() * (seg > 20000).float()).T
+                _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float() * (seg > 10000).float()).T
                 emb_cols = scatter_mean(src=output[_idxs[0], _idxs[1], :], index=_idxs[0], dim=-2) # [bz, emb_size]
                 return emb_cols
             if self.pooling == 'avg-token-and-cell-segs': # (>1)01__
-                _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float() * (seg > 10000).float()).T
-                # _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float() * (seg > 20000).float()).T
+                _idxs = torch.nonzero(((seg % 10000 // 100) == 1).float() * (seg % 100 < 98).float()).T
                 emb_cols = scatter_mean(src=output[_idxs[0], _idxs[1], :], index=_idxs[0], dim=-2) # [bz, emb_size]
                 return emb_cols
+            if self.pooling == 'first-cell-seg':
+                _idxs = torch.nonzero(seg==101).T
+                return output[_idxs[0], _idxs[1], :]
 
         if option == 'first-cell':
             if self.pooling == 'seg':
-                col_num = torch.max(seg % 10000 // 100).item()
-                return output[:,col_num+1,:]
+                _idxs = torch.nonzero(seg==10101).T
+                return output[_idxs[0], _idxs[1], :]
+
             if self.pooling == 'avg-token':  # 01～/01/01
                 _idxs = torch.nonzero( (seg % 10000== 101).float() ).T
                 emb_cols = scatter_mean(src=output[_idxs[0], _idxs[1], :], index=_idxs[0], dim=-2)

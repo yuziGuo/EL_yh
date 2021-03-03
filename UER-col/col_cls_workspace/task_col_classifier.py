@@ -8,7 +8,6 @@ from uer.utils.vocab import Vocab
 from uer.utils.tokenizer import BertTokenizer
 from uer.utils.optimizers import WarmupLinearSchedule, AdamW
 
-
 from demos.samples.sample_mini_tables import table_a, table_b
 # from demos.utils import get_args
 from demos.utils import load_or_initialize_parameters
@@ -19,22 +18,28 @@ import logging
 import random
 import os
 from collections import defaultdict
+import time
+import json
 
 import torch
+from tensorboardX import SummaryWriter
 from torch import nn
-from col_spec_yh.store_utils import decode_and_verify_aida_file, get_labels_map_from_aida_file
+from torch.utils.data import DataLoader
+from col_spec_yh.store_utils import decode_and_verify_aida_file_2, get_labels_map_from_aida_file_2
+from col_cls_workspace.data import microTableDataset, fn_wrapper
 
 
 def set_args(predefined_dict_groups):
     # options for model
     args = Bunch()
     args.mask_mode = 'cross-wise'  # in ['row_wise', 'col_wise', 'cross_wise', 'cross_and_hier_wise']
-    args.mask_skip_level_ban = False
+    args.additional_ban = 0
     # args.pooling = 'avg-token'
     args.pooling = 'avg-cell-seg'
     args.table_object = 'first-column'
     args.noise_num = 2
     args.seq_len = 100
+    args.row_wise_fill = True
 
     args.pretrained_model_path = "./models/bert_model.bin-000"
     args.vocab_path = 'models/google_uncased_en_vocab.txt'
@@ -45,6 +50,7 @@ def set_args(predefined_dict_groups):
     args.encoder = 'bertTab'
     args.subword_type = 'none'
     args.tokenizer = 'bert'
+    args.tokenizer = globals()[args.tokenizer.capitalize() + "Tokenizer"](args)
 
     args.feedforward_size = 3072
     args.hidden_size = 768
@@ -57,44 +63,28 @@ def set_args(predefined_dict_groups):
     args.dropout = 0.1
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # options task-specific
-    args.epochs_num = 40
-    args.train_path = './data/aida/ff_no_dup_train_samples'
-    args.t2d_path = './data/aida/ff_no_dup_test_samples_t2d'
-    args.limaye_path = './data/aida/ff_no_dup_test_samples_limaye'
-    args.wiki_path = './data/aida/ff_no_dup_test_samples_wikipedia'
-
     # other options
+    args.shuffle_rows = True
     args.report_steps = 100
-    args.logger_name = 'detail'
-    args.logger_dir_name = 'col_cls_workspace/logs_col'
-    args.logger_file_name = 'rec_all_1'
     for predefined_dict_group in predefined_dict_groups.values():
         for k, v in predefined_dict_group.items():
             args[k] = v
-    args.labels_map = get_labels_map_from_aida_file(args.train_path)
+    args.labels_map = get_labels_map_from_aida_file_2(args.train_path)
     args.labels_num = len(args.labels_map)
-    args.tokenizer = globals()[args.tokenizer.capitalize() + "Tokenizer"](args)
+
+    # logger and tensorboard writer
+    if args.tx_logger_dir_name:
+        rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
+        args.summary_writer = SummaryWriter(logdir=os.path.join(args.tx_logger_dir_name, '-'.join([args.exp_name,rq])))
+    else:
+        args.summary_writer = None
     if args.logger_dir_name is not None:
-        args.logger = get_logger(logger_name='detail', dir_name=args.logger_dir_name, file_name=args.logger_file_name)
+        args.logger_name = 'detail'
+        args.logger = get_logger(logger_name=args.logger_name, dir_name=args.logger_dir_name, file_name=args.logger_file_name)
     else:
         args.logger = None
     return args
 
-
-def read_dataset(args, data_path):
-    dataset = []
-    raw_tab_id_list, label_names, tab_cols_list = decode_and_verify_aida_file(data_path)
-
-    for raw_tab_id, label_name, tab_col in zip(raw_tab_id_list, label_names, tab_cols_list):
-        tokens, seg = generate_seg(args, tab_col, noise_num=2, row_wise_fill=True)
-        label = args.labels_map.get(label_name)
-        dataset.append((tokens, label, seg, raw_tab_id))
-    return dataset
-    # args.train_path = './data/aida/ff_no_dup_train_samples'
-    # args.t2d_path = './data/aida/ff_no_dup_test_samples_t2d'
-    # args.limaye_path = './data/aida/ff_no_dup_test_samples_limaye'
-    # args.wiki_path = './data/aida/ff_no_dup_test_samples_wikipedia'
 
 class col_classifier(nn.Module):
     def __init__(self, args):
@@ -153,31 +143,13 @@ def eval_batch(args, model, src_batch, seg_batch):
     return logits
 
 
-def _loader(args, ds, shuffle=True):
-    # ds: list < tokens, label, seg, raw_tab_id>
-    # raw_tab_id is not loaded here
-    if shuffle:
-        random.shuffle(ds)  # todo: set seed
-    src = torch.LongTensor([example[0] for example in ds])
-    tgt = torch.LongTensor([example[1] for example in ds])
-    seg = torch.LongTensor([example[2] for example in ds])
-    if shuffle:
-        random.shuffle(ds)  # todo: set seed
-    return batch_loader(args.batch_size, src, tgt, seg)
-
-
-
 def evaluate(args, model, epoch_id=None):
     def reduce_to_tab_level(logits_all, ds):
         raw_tab_to_sample_id = defaultdict(list)
-        raw_tab_to_label = {}
-        raw_tab_ids = []
-        for sample_id, raw_tab_id in enumerate([_[-1] for _ in ds]):
+        for sample_id, raw_tab_id in enumerate([_[0] for _ in ds.samples]):
             raw_tab_to_sample_id[raw_tab_id].append(sample_id)  # rawtab_to_sample_id : {'<raw_tab_id>': [0,1,2,...]}
-        raw_tab_to_label = {raw_tab: ds[sample_id_list[0]][1]
-                            for raw_tab, sample_id_list in raw_tab_to_sample_id.items()}
-        raw_tab_ids = raw_tab_to_sample_id.keys()
-        tab_level_ground_truth = torch.LongTensor(list(map(lambda i: raw_tab_to_label[i], raw_tab_ids))).to(args.device)
+        raw_tab_ids = list(ds.tb_to_cls_name.keys())
+        tab_level_ground_truth = torch.LongTensor([args.labels_map[ds.tb_to_cls_name[tid]] for tid in raw_tab_ids])
         tab_level_logits = torch.stack(
             [
                 torch.mean(logits_all[raw_tab_to_sample_id[raw_tab_id]], dim=0)
@@ -187,57 +159,94 @@ def evaluate(args, model, epoch_id=None):
         tab_level_preds = torch.argmax(tab_level_logits, dim=1)
         return tab_level_ground_truth, tab_level_preds
 
-    for ds_path in [args.t2d_path,args.wiki_path, args.limaye_path]:
-        ds = read_dataset(args, ds_path)
+    def get_result_for_one_test_set(args, ds_path, epoch_id):
+        ds = microTableDataset(ds_path, train=False, shuffle_rows=args.shuffle_rows)
+        _loader = DataLoader(ds, args.batch_size, collate_fn=fn_wrapper(args))
         # ds: list < tokens, label, seg, raw_tab_id >
         with torch.no_grad():
             logits_all = torch.cat(
                 [
                     eval_batch(args, model, src_batch, seg_batch)
-                    for src_batch, _, seg_batch in _loader(args, ds, shuffle=False)
+                    for src_batch, _, seg_batch, _ in _loader
                 ]
             )
-        tab_level_ground_truth, tab_level_preds = reduce_to_tab_level(logits_all, ds)
+        tab_level_ground_truth, tab_level_preds = reduce_to_tab_level(logits_all, _loader.dataset)
         acc_score = accuracy_score(tab_level_ground_truth.data.cpu().numpy(),
                                    tab_level_preds.data.cpu().numpy())
+        ds_name = os.path.basename(ds_path).split('_')[-1]
         if args.logger:
             args.logger.warning("Epoch_id: {}\t DataSet: {}\tAcc: {}".format(
-                epoch_id, os.path.basename(ds_path), acc_score
+                epoch_id, ds_name, acc_score
             ))
+        return ds_name, acc_score
+
+    results = defaultdict(float)
+    for ds_path in [args.t2d_path,args.wiki_path, args.limaye_path]:
+        ds_name, acc_score = get_result_for_one_test_set(args, ds_path, epoch_id)
+        results[ds_name] = acc_score
+
+    if args.summary_writer:
+        args.summary_writer.add_scalars('data/acc', results, epoch_id)
 
 
 def train_and_eval(args, model):
-    ds = read_dataset(args, args.train_path)
+    ds = microTableDataset(args.train_path, train=True)
+    _loader = DataLoader(ds, batch_size=args.batch_size, collate_fn=fn_wrapper(args))
     args.train_steps = int(len(ds) * args.epochs_num / args.batch_size) + 1
     optimizer, scheduler = build_optimizer(args, model)
 
     for epoch in range(1, args.epochs_num+1):
         total_loss = 0.
         model.train()
-        for i, (src_batch, tgt_batch, seg_batch) in enumerate(_loader(args, ds, shuffle=True)):
+        for i, (src_batch, tgt_batch, seg_batch, _) in enumerate(_loader):
             loss = train_batch(args, model, optimizer, scheduler, src_batch, tgt_batch, seg_batch)
             total_loss += loss.item()
             if (i + 1) % args.report_steps == 0:
-                args.logger.info("Epoch id: {}, Training steps: {}, Avg loss: {:.3f}".format(epoch, i + 1,
+
+                if args.logger:
+                    args.logger.info("Epoch id: {}, Training steps: {}, Avg loss: {:.3f}".format(epoch, i + 1,
                                                                                   total_loss / args.report_steps))
+                else:
+                    print("Epoch id: {}, Training steps: {}, Avg loss: {:.3f}".format(epoch, i + 1,
+                                                                                  total_loss / args.report_steps))
+
+                if args.summary_writer:
+                    args.summary_writer.add_scalar('data/loss', total_loss / args.report_steps, epoch)
                 total_loss = 0.
 
-        # args.logger.INFO()
-        if 'no_dup' in args.train_path:
-            if epoch % 3 == 0:
-                model.eval()
-                evaluate(args, model, epoch_id=epoch)
-        else:
-            model.eval()
+        model.eval()
+        if epoch >= 1:
             evaluate(args, model, epoch_id=epoch)
 
+
+def post_experiment(args, model):
+    # record logger
+    if args.logger:
+        logging.getLogger(args.logger_name).handlers = []
+
+    # write things to writer
+    # parameters
+    # embeddings
+
+    # close summary writer
+    if args.summary_writer:
+        path = "./acc_and_loss.json"
+        # args.summary_writer.export_scalars_to_json(path)
+        with open(path, 'a') as f:
+            json.dump(args.summary_writer.scalar_dict, f)
+            f.write('\n')
+        args.summary_writer.close()
+        
 
 def experiment(repeat_time, predefined_dict_groups=None):
     for _ in range(repeat_time):
         args = set_args(predefined_dict_groups=predefined_dict_groups)
         if args.logger:
             args.logger.warning('[For this run] Predefined_dict_groups: {}'.format(predefined_dict_groups))
-        args.logger.info('Args: {}'.format(args))
+            args.logger.info('Args: {}'.format(args))
+        if args.summary_writer:
+            args.summary_writer.add_text('Text', 'Args: {}'.format(args), _)
+
         model = col_classifier(args)
         load_or_initialize_parameters(args, model.encoder)
         model = model.to(args.device)
@@ -247,41 +256,33 @@ def experiment(repeat_time, predefined_dict_groups=None):
         if args.logger:
             args.logger.info('Model sent to device: {}/{}'.format(model.state_dict()['output_layer_2.bias'].device, args.device))
         train_and_eval(args, model)
-        if args.logger:
-            logging.getLogger(args.logger_name).handlers = []  # https://stackoverflow.com/questions/7484454/removing-handlers-from-pythons-logging-loggers
+
+        # end
+
+        post_experiment(args, model)
+
 
 
 if __name__ == '__main__':
-    # op_2_1 = {'pooling': 'avg-cell-seg'}
-    # op_2_2 = {'pooling': 'seg'}
-    op_2_1 = {'pooling': 'avg-token', 'mask_mode': 'cross-wise'}
-    op_2_2 = {'pooling': 'avg-token', 'mask_mode': 'row-wise'}
-
-    op_3_1 = {
-        "train_path": './data/aida/ff_no_dup_train_samples',
-        "t2d_path": './data/aida/ff_no_dup_test_samples_t2d',
-        "limaye_path": './data/aida/ff_no_dup_test_samples_limaye',
-        "wiki_path": './data/aida/ff_no_dup_test_samples_wikipedia',
-        "epochs_num": 30,
-    }
-    op_3_2 = {
-        "train_path": './data/aida/ff_train_samples',
-        "t2d_path": './data/aida/ff_test_samples_t2d',
-        "limaye_path": './data/aida/ff_test_samples_limaye',
-        "wiki_path": './data/aida/ff_test_samples_wikipedia',
-        "epochs_num": 6,
-    }
-
-    # for ds_options in [op_3_1, op_3_2]:
-    for ds_options in [op_3_2, op_3_2]:
-        for key_options in [op_2_1,op_2_2]: # process_2
-            predefined_dict_groups = {
-                                      'debug_options':{
-                                          'logger_dir_name':'log_debug_recover_dup',
-                                          'logger_file_name':'rec_all_debug_recover_dup'
-                                      },
-                                      'key_set_group':key_options,
-                                      'ds_set_group':ds_options
-                                      }
-            print(predefined_dict_groups)
-            experiment(repeat_time=1, predefined_dict_groups=predefined_dict_groups)
+    # op_2_1 = {'pooling': 'avg-token', 'mask_mode': 'cross-wise', 'additional_ban': 2}
+    # op_3_1 = {
+    #     "train_path": './data/aida/IO/train_samples',
+    #     "t2d_path": './data/aida/IO/test_samples_t2d',
+    #     "limaye_path": './data/aida/IO/test_samples_limaye',
+    #     "wiki_path": './data/aida/IO/test_samples_wikipedia',
+    #     "epochs_num": 30,
+    # }
+    #
+    # for ds_options in [op_3_1]:
+    #     for key_options in [op_2_1]: # process_2
+    #         predefined_dict_groups = {
+    #                                   'debug_options':{
+    #                                       'logger_dir_name':'./col_cls_workspace/log_tem',
+    #                                       'logger_file_name':'./col_cls_workspace/rec_all_tem'
+    #                                   },
+    #                                   'key_set_group':key_options,
+    #                                   'ds_set_group':ds_options
+    #                                   }
+    #         print(predefined_dict_groups)
+    #         experiment(repeat_time=1, predefined_dict_groups=predefined_dict_groups)
+    pass

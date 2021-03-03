@@ -37,7 +37,7 @@ def check_segs(iter):
                 now = seg[s]%10000
 
 
-def test_1():
+def test_1_small_table():
     args = get_args()
     args.seq_len = 128
     tokens_0, seg_0 = generate_seg(args, table_a, row_wise_fill=True)
@@ -48,7 +48,7 @@ def test_1():
     import ipdb; ipdb.set_trace()
 
 
-def test_3():
+def test_3_too_much_empty_values():
     args = get_args()
     args.seq_len = 16
     tokens_0, seg_0 = generate_seg(args, table_with_empty_values_1, row_wise_fill=True)
@@ -58,7 +58,7 @@ def test_3():
     mask = generate_mask(seg)
     import ipdb; ipdb.set_trace()
 
-def test_2():
+def test_2_bigger_table():
     from col_spec_yh.store_utils import test_decode_spider_file
     tab_file = 'demos/samples/sample_file_type0-1.tb'
     tab_cols_list = test_decode_spider_file(tab_file)
@@ -72,22 +72,65 @@ def test_2():
     mask = generate_mask(seg)  # mask.shape: torch.Size([10, 1, 64, 64])
     import ipdb; ipdb.set_trace()
 
-def test_4():
+# # deprecated
+# def test_4_skip_level_ban():
+#     args = get_args()
+#     args.seq_len = 128
+#     tokens_0, seg_0 = generate_seg(args, table_a, row_wise_fill=True)
+#     tokens_1, seg_1 = generate_seg(args, table_b, row_wise_fill=True)
+#     seg = torch.LongTensor([seg_0, seg_1])
+#     check_segs(zip([seg_0, seg_1], [tokens_0, tokens_1]))
+#     mask = generate_mask(seg, skip_level_ban=True)
+#     import ipdb; ipdb.set_trace()
+
+
+def test_5_col_wise_fill():
+    args = get_args()
+    args.seq_len = 128
+    tokens_0, seg_0 = generate_seg(args, table_a, row_wise_fill=False)
+    tokens_1, seg_1 = generate_seg(args, table_b, row_wise_fill=False)
+    seg = torch.LongTensor([seg_0, seg_1])
+    check_segs(zip([seg_0, seg_1], [tokens_0, tokens_1]))
+    mask = generate_mask(seg)
+    import ipdb; ipdb.set_trace()
+
+def test_6_compare_row_and_col_wise_fill():
     args = get_args()
     args.seq_len = 128
     tokens_0, seg_0 = generate_seg(args, table_a, row_wise_fill=True)
     tokens_1, seg_1 = generate_seg(args, table_b, row_wise_fill=True)
     seg = torch.LongTensor([seg_0, seg_1])
     check_segs(zip([seg_0, seg_1], [tokens_0, tokens_1]))
-    mask = generate_mask(seg, skip_level_ban=True)
+    mask = generate_mask(seg)
+    import ipdb; ipdb.set_trace()
+    args = get_args()
+    args.seq_len = 128
+    tokens_0, seg_0 = generate_seg(args, table_a, row_wise_fill=True)
+    tokens_1, seg_1 = generate_seg(args, table_b, row_wise_fill=True)
+    seg = torch.LongTensor([seg_0, seg_1])
+    check_segs(zip([seg_0, seg_1], [tokens_0, tokens_1]))
+    mask = generate_mask(seg)
+
+def test_7_additional_ban():
+    args = get_args()
+    args.row_wise_fill=False
+    args.seq_len = 128
+    tokens_0, seg_0 = generate_seg(args, table_a, row_wise_fill=args.row_wise_fill)
+    tokens_1, seg_1 = generate_seg(args, table_b, row_wise_fill=args.row_wise_fill)
+    seg = torch.LongTensor([seg_0, seg_1])
+    check_segs(zip([seg_0, seg_1], [tokens_0, tokens_1]))
+    mask = generate_mask(seg, additional_ban=2)
     import ipdb; ipdb.set_trace()
 
 
 if __name__=='__main__':
-    test_4()
-    test_3()
-    test_1()
-    test_2()
+    test_7_additional_ban()
+    test_5_col_wise_fill()
+    test_6_compare_row_and_col_wise_fill()
+    test_4_skip_level_ban()
+    test_3_too_much_empty_values()
+    test_1_small_table()
+    test_2_bigger_table()
 
 
 

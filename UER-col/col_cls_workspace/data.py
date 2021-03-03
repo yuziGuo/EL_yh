@@ -40,7 +40,7 @@ class microTableDataset(IterableDataset):
         self.tb_to_rows = {k: random.shuffle(v) or v for k,v in self.tb_to_rows.items()}
 
     def __iter__(self):
-        if self.shuffle_rows == True:
+        if self.shuffle_rows:
             self._shuffle_rows()
         self.samples = []
         for tid, rows in self.tb_to_rows.items():

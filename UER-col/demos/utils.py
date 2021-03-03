@@ -9,6 +9,7 @@ import torch
 from uer.utils.vocab import Vocab
 from uer.utils.tokenizer import BertTokenizer
 
+from col_spec_yh.store_utils import get_labels_map_from_aida_file_2
 
 def get_logger(logger_name="detail", dir_name='logs_default', file_name='log_rec_all'):
     logger = logging.getLogger(logger_name)
@@ -18,6 +19,7 @@ def get_logger(logger_name="detail", dir_name='logs_default', file_name='log_rec
         os.makedirs(dir_name)
     rq = time.strftime('%Y%m%d%H%M', time.localtime(time.time()))
     detail_log_name = os.path.join(dir_name, rq) + '.log'
+
     # add a file handler
     fh = logging.FileHandler(detail_log_name, mode='w')
     fh.setLevel(logging.INFO)  # 输出到file的log等级的开关
@@ -40,12 +42,14 @@ def get_logger(logger_name="detail", dir_name='logs_default', file_name='log_rec
     return logger
 
 
-
-
-def get_args():
+def get_args_aida_task():
     args = Bunch()
-    args.mask_mode = 'cross-wise'
     args.seq_len = 64
+    args.row_wise_fill = True
+    args.mask_mode = 'cross-wise'
+    args.additional_ban = 2
+    args.table_object = 'first-column'
+    args.pooling = 'avg-token'
 
     args.pretrained_model_path = "./models/bert_model.bin-000"
     args.vocab_path = 'models/google_uncased_en_vocab.txt'
@@ -55,7 +59,6 @@ def get_args():
     args.embedding = 'tab'  # before: bert
     args.encoder = 'bertTab'
     args.subword_type = 'none'
-    args.pooling = 'avg'  # before: crosswise-bert
     args.tokenizer = 'bert'
     args.tokenizer = globals()[args.tokenizer.capitalize() + "Tokenizer"](args)
 
@@ -68,6 +71,51 @@ def get_args():
     args.dropout = 0.1
 
     # args.target = 'bert'
+    return args
+
+def set_args_2():
+    # options for model
+    args = Bunch()
+    args.mask_mode = 'cross-wise'  # in ['row_wise', 'col_wise', 'cross_wise', 'cross_and_hier_wise']
+    args.additional_ban = 0
+    # args.pooling = 'avg-token'
+    args.pooling = 'avg-cell-seg'
+    args.table_object = 'first-column'
+    args.noise_num = 2
+    args.seq_len = 100
+    args.row_wise_fill = True
+
+    args.pretrained_model_path = "./models/bert_model.bin-000"
+    args.vocab_path = 'models/google_uncased_en_vocab.txt'
+    args.vocab = Vocab()
+    args.vocab.load(args.vocab_path)
+    args.emb_size = 768
+    args.embedding = 'tab'  # before: bert
+    args.encoder = 'bertTab'
+    args.subword_type = 'none'
+    args.tokenizer = 'bert'
+
+    args.feedforward_size = 3072
+    args.hidden_size = 768
+    args.heads_num = 12
+    args.layers_num = 12
+    args.learning_rate = 2e-5
+    args.warmup = 0.1
+    args.batch_size = 32
+    args.dropout = 0.1
+    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    args.train_path = './data/aida/IO/train_samples'
+    args.t2d_path = './data/aida/IO/test_samples_t2d'
+    args.limaye_path = './data/aida/IO/test_samples_limaye'
+    args.wiki_path = './data/aida/IO/test_samples_wikipedia'
+
+
+    # other options
+    args.report_steps = 100
+    args.labels_map = get_labels_map_from_aida_file_2(args.train_path)
+    args.labels_num = len(args.labels_map)
+    args.tokenizer = globals()[args.tokenizer.capitalize() + "Tokenizer"](args)
     return args
 
 

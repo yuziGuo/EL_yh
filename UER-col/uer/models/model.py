@@ -35,7 +35,7 @@ class Model(nn.Module):
             sub_ids = word2sub(src, self.vocab, self.sub_vocab, self.subword_type)
             emb = emb + self.subencoder(sub_ids).contiguous().view(*emb.size())
 
-        output = self.encoder(emb, seg)            
+        output = self.encoder(emb, seg)
 
         loss_info = self.target(output, tgt)
             
